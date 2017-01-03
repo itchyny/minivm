@@ -15,6 +15,8 @@ int yywrap(yyscan_t yyscanner)
 "-"    return MINUS;
 "*"    return TIMES;
 "/"    return DIVIDE;
+"("    return LPAREN;
+")"    return RPAREN;
 
 \r\n?|\n   return CR;
 [[:blank:]]  ;

@@ -15,7 +15,7 @@ int yyerror();
 }
 %token <long_value> LONG_LITERAL;
 %token <double_value> DOUBLE_LITERAL;
-%token PLUS MINUS TIMES DIVIDE CR
+%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN CR
 %type <double_value> expression primary
 
 %left PLUS MINUS
@@ -45,6 +45,10 @@ expression        : expression PLUS expression
                   | expression DIVIDE expression
                     {
                       $$ = $1 / $3;
+                    }
+                  | LPAREN expression RPAREN
+                    {
+                      $$ = $2;
                     }
                   | primary
                     {
