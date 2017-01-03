@@ -5,6 +5,10 @@ int yylex();
 int yyerror();
 %}
 
+%pure-parser
+%parse-param {void *scanner}
+%lex-param {void *scanner}
+
 %union {
   long long_value;
   double double_value;
@@ -51,20 +55,8 @@ primary            : DOUBLE_LITERAL
 
 %%
 
-int yyerror(char const *str)
+int yyerror(void *scanner, char const *str)
 {
-    extern char *yytext;
-    fprintf(stderr, "parser error near %s\n", yytext);
+    fprintf(stderr, "parser error near %s\n", str);
     return 0;
-}
-
-int main(void)
-{
-    extern int yyparse(void);
-    extern FILE *yyin;
-    yyin = stdin;
-    if (yyparse()) {
-        fprintf(stderr, "Error!\n");
-        exit(1);
-    }
 }
