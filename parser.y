@@ -23,35 +23,37 @@ int yyerror();
 
 %%
 
-program            : expression CR
-                   {
-                     printf(">> %lf\n", $1);
-                   }
-                   program
-                   |
-                   ;
+program           : expression CR
+                    {
+                      printf(">> %lf\n", $1);
+                    } program
+                  |
+                  ;
 
-expression         : expression PLUS expression
-                   {
-                     $$ = $1 + $3;
-                   }
-                   | expression MINUS expression
-                   {
-                     $$ = $1 - $3;
-                   }
-                   | expression TIMES expression
-                   {
-                     $$ = $1 * $3;
-                   }
-                   | expression DIVIDE expression
-                   {
-                     $$ = $1 / $3;
-                   }
-                   | primary
-                   ;
+expression        : expression PLUS expression
+                    {
+                      $$ = $1 + $3;
+                    }
+                  | expression MINUS expression
+                    {
+                      $$ = $1 - $3;
+                    }
+                  | expression TIMES expression
+                    {
+                      $$ = $1 * $3;
+                    }
+                  | expression DIVIDE expression
+                    {
+                      $$ = $1 / $3;
+                    }
+                  | primary
+                    {
+                      $$ = $1;
+                    }
+                  ;
 
-primary            : DOUBLE_LITERAL
-                   ;
+primary           : DOUBLE_LITERAL
+                  ;
 
 %%
 
