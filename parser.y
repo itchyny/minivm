@@ -73,6 +73,6 @@ primary           : LONG_LITERAL
 
 int yyerror(void *scanner, char const *str)
 {
-    fprintf(stderr, "parser error near %s\n", str);
+    fprintf(stderr, "Error: %s\n", str);
     return 0;
 }

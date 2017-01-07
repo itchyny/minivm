@@ -9,7 +9,6 @@ int main(void)
   yylex_init(&scanner);
   yyset_in(stdin, scanner);
   if (yyparse(scanner)) {
-    fprintf(stderr, "Error!\n");
     yylex_destroy(scanner);
     exit(1);
   }
