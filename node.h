@@ -1,5 +1,5 @@
-#ifndef AST_NODE_H
-#define AST_NODE_H
+#ifndef NODE_H
+#define NODE_H
 
 #include <stdint.h>
 
@@ -10,6 +10,7 @@
 #define longn(x) (*(long*)&(x))
 
 enum node_type {
+  NODE_STMTS,
   NODE_BINOP,
   NODE_LONG,
   NODE_DOUBLE
@@ -18,5 +19,9 @@ enum node_type {
 typedef struct node {
   struct node *car, *cdr;
 } node;
+
+node* cons(node*, node*);
+node* new_binop(int, node*, node*);
+void print_node(node*, int);
 
 #endif

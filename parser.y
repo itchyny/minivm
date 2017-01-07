@@ -1,9 +1,11 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "node.c"
+#include "node.h"
+#include "parser.h"
 int yylex();
 int yyerror();
+parser_state* yyget_extra();
 %}
 
 %pure-parser
@@ -18,18 +20,34 @@ int yyerror();
 %token <long_value> LONG_LITERAL;
 %token <double_value> DOUBLE_LITERAL;
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN CR
-%type <node> expression primary
+%type <node> program statements expression primary
 
 %left PLUS MINUS
 %left TIMES DIVIDE
 
 %%
 
-program           : expression CR
+program           : sep_opt statements sep_opt
                     {
-                      print_node($1, 0);
-                    } program
-                  | CR program
+                      yyget_extra(scanner)->node = $$ = $2;
+                    }
+                  ;
+
+statements        : statements sep expression
+                    {
+                      $$ = cons(nint(NODE_STMTS), cons($1, $3));
+                    }
+                  | expression
+                    {
+                      $$ = $1;
+                    }
+                  ;
+
+sep               : sep CR
+                  | CR
+                  ;
+
+sep_opt           : sep
                   |
                   ;
 

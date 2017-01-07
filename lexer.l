@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include "node.h"
+#include "parser.h"
 #include "y.tab.h"
 #define YY_DECL int yylex(YYSTYPE *yylval, void *yyscanner)
 int yywrap(yyscan_t yyscanner)
@@ -9,6 +10,7 @@ int yywrap(yyscan_t yyscanner)
 }
 %}
 %option reentrant
+%option extra-type="parser_state *"
 
 %%
 
