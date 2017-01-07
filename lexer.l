@@ -26,7 +26,7 @@ int yywrap(yyscan_t yyscanner)
     yylval->long_value = atol(yytext);
     return LONG_LITERAL;
 }
-[0-9]*\.[0-9]* {
+[0-9]+\.[0-9]+ {
     yylval->double_value = strtod(yytext, NULL);
     return DOUBLE_LITERAL;
 }
