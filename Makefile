@@ -1,7 +1,7 @@
-svm: main.c y.tab.c lex.yy.c
+svm: main.c node.c y.tab.c lex.yy.c
 	cc -o svm main.c y.tab.c lex.yy.c
 
-y.tab.c y.tab.h: parser.y
+y.tab.c y.tab.h: parser.y node.c node.h
 	yacc -dv $<
 
 lex.yy.c lex.yy.h: lexer.l

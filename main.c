@@ -1,3 +1,4 @@
+#include "node.h"
 #include "lex.yy.h"
 #include "y.tab.h"
 int yyparse();

@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "node.c"
 int yylex();
 int yyerror();
 %}
@@ -10,13 +11,14 @@ int yyerror();
 %lex-param {void *scanner}
 
 %union {
+  node *node;
   long long_value;
   double double_value;
 }
 %token <long_value> LONG_LITERAL;
 %token <double_value> DOUBLE_LITERAL;
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN CR
-%type <double_value> expression primary
+%type <node> expression primary
 
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -25,26 +27,27 @@ int yyerror();
 
 program           : expression CR
                     {
-                      printf(">> %lf\n", $1);
+                      print_node($1, 0);
                     } program
+                  | CR program
                   |
                   ;
 
 expression        : expression PLUS expression
                     {
-                      $$ = $1 + $3;
+                      $$ = new_binop(PLUS, $1, $3);
                     }
                   | expression MINUS expression
                     {
-                      $$ = $1 - $3;
+                      $$ = new_binop(MINUS, $1, $3);
                     }
                   | expression TIMES expression
                     {
-                      $$ = $1 * $3;
+                      $$ = new_binop(TIMES, $1, $3);
                     }
                   | expression DIVIDE expression
                     {
-                      $$ = $1 / $3;
+                      $$ = new_binop(DIVIDE, $1, $3);
                     }
                   | LPAREN expression RPAREN
                     {
@@ -56,7 +59,14 @@ expression        : expression PLUS expression
                     }
                   ;
 
-primary           : DOUBLE_LITERAL
+primary           : LONG_LITERAL
+                    {
+                      $$ = cons(nint(NODE_LONG), nptr($1));
+                    }
+                  | DOUBLE_LITERAL
+                    {
+                      $$ = cons(nint(NODE_DOUBLE), nptr($1));
+                    }
                   ;
 
 %%

@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include "node.h"
 #include "y.tab.h"
 #define YY_DECL int yylex(YYSTYPE *yylval, void *yyscanner)
 int yywrap(yyscan_t yyscanner)
