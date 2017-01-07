@@ -34,7 +34,7 @@ void print_node(node* n, int indent) {
   for (int i = 0; i < indent; i++) {
     printf(" ");
   }
-  printf("(%d, ", intn(n->car));
+  printf("(");
   switch (intn(n->car)) {
     case NODE_STMTS:
       print_node(n->cdr->car, indent + 2);
@@ -45,10 +45,10 @@ void print_node(node* n, int indent) {
       print_binop(n->cdr, indent);
       break;
     case NODE_DOUBLE:
-      printf("%lf", doublen(n->cdr));
+      printf("double %lf", doublen(n->cdr));
       break;
     case NODE_LONG:
-      printf("%ld", longn(n->cdr));
+      printf("long %ld", longn(n->cdr));
       break;
   }
   printf(")");
