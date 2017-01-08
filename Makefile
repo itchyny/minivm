@@ -1,5 +1,5 @@
-svm: main.c codegen.c node.c y.tab.c lex.yy.c
-	cc -o svm main.c node.c y.tab.c lex.yy.c
+svm: main.c codegen.c state.c node.c y.tab.c lex.yy.c
+	cc -o svm main.c state.c node.c y.tab.c lex.yy.c
 
 y.tab.c y.tab.h: parser.y node.c node.h
 	yacc -dvy $<

@@ -6,4 +6,7 @@ typedef struct state {
   void* scanner;
 } state;
 
+state* new_state();
+void free_state(state*);
+
 #endif
