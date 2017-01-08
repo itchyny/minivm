@@ -17,11 +17,11 @@ int main(void)
     exit(1);
   }
   print_node(p->node, 0);
-  scope* s = new_scope();
-  codegen(s, p->node);
-  print_codes(s);
-  execute_codes(s);
-  free_scope(s);
+  env* e = new_env();
+  codegen(e, p->node);
+  print_codes(e);
+  execute_codes(e);
+  free_env(e);
   yylex_destroy(p->scanner);
   free_state(p);
 }
