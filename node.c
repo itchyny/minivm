@@ -10,6 +10,15 @@ node* cons(node* car, node* cdr) {
   return n;
 }
 
+node* append(node* n, node* m) {
+  node* k = n;
+  while (k->cdr != NULL) {
+    k = k->cdr;
+  }
+  k->cdr = m;
+  return n;
+}
+
 node* new_binop(int op, node* lhs, node* rhs) {
   return cons(nint(NODE_BINOP), cons(nint(op), cons(lhs, rhs)));
 }
@@ -38,9 +47,13 @@ void print_node(node* n, int indent) {
   printf("(");
   switch (intn(n->car)) {
     case NODE_STMTS:
-      print_node(n->cdr->car, indent + 2);
-      printf(",");
-      print_node(n->cdr->cdr, indent + 2);
+      n = n->cdr;
+      while (n != NULL) {
+        print_node(n->car, indent + 2);
+        if (n->cdr != NULL)
+          printf(",");
+        n = n->cdr;
+      }
       break;
     case NODE_BINOP:
       print_binop(n->cdr, indent);

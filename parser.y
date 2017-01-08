@@ -35,11 +35,11 @@ program           : sep_opt statements sep_opt
 
 statements        : statements sep expression
                     {
-                      $$ = cons(nint(NODE_STMTS), cons($1, $3));
+                      $$ = append($1, cons($3, NULL));
                     }
                   | expression
                     {
-                      $$ = $1;
+                      $$ = cons(nint(NODE_STMTS), cons($1, NULL));
                     }
                   ;
 

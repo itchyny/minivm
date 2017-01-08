@@ -21,6 +21,7 @@ typedef struct node {
 } node;
 
 node* cons(node*, node*);
+node* append(node*, node*);
 node* new_binop(int, node*, node*);
 void print_node(node*, int);
 
