@@ -4,12 +4,12 @@
 #include "node.h"
 #include "parser.h"
 int yylex();
-int yyerror();
-parser_state* yyget_extra();
+int yyerror(parser_state*, char const*);
+#define YYLEX_PARAM p->scanner
 %}
 
 %pure-parser
-%parse-param {void *scanner}
+%parse-param {parser_state *p}
 %lex-param {void *scanner}
 
 %union {
@@ -29,7 +29,7 @@ parser_state* yyget_extra();
 
 program           : sep_opt statements sep_opt
                     {
-                      yyget_extra(scanner)->node = $$ = $2;
+                      p->node = $$ = $2;
                     }
                   ;
 
@@ -89,7 +89,7 @@ primary           : LONG_LITERAL
 
 %%
 
-int yyerror(void *scanner, char const *str)
+int yyerror(parser_state *p, char const *str)
 {
     fprintf(stderr, "Error: %s\n", str);
     return 0;

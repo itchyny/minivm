@@ -10,7 +10,6 @@ int yywrap(yyscan_t yyscanner)
 }
 %}
 %option reentrant
-%option extra-type="parser_state *"
 
 %%
 

@@ -6,15 +6,14 @@ int yyparse();
 
 int main(void)
 {
-  parser_state ps;
-  yyscan_t scanner;
-  yylex_init(&scanner);
-  yylex_init_extra(&ps, &scanner);
-  yyset_in(stdin, scanner);
-  if (yyparse(scanner)) {
-    yylex_destroy(scanner);
+  parser_state p;
+  p.node = NULL;
+  yylex_init(&p.scanner);
+  yyset_in(stdin, p.scanner);
+  if (yyparse(&p)) {
+    yylex_destroy(p.scanner);
     exit(1);
   }
-  print_node(yyget_extra(scanner)->node, 0);
-  yylex_destroy(scanner);
+  print_node(p.node, 0);
+  yylex_destroy(p.scanner);
 }
