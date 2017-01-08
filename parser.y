@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "node.h"
-#include "parser.h"
+#include "state.h"
 int yylex();
-int yyerror(parser_state*, char const*);
+int yyerror(state*, char const*);
 #define YYLEX_PARAM p->scanner
 %}
 
 %pure-parser
-%parse-param {parser_state *p}
+%parse-param {state *p}
 %lex-param {void *scanner}
 
 %union {
@@ -89,7 +89,7 @@ primary           : LONG_LITERAL
 
 %%
 
-int yyerror(parser_state *p, char const *str)
+int yyerror(state *p, char const *str)
 {
     fprintf(stderr, "Error: %s\n", str);
     return 0;

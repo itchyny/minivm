@@ -1,5 +1,5 @@
 #include "node.h"
-#include "parser.h"
+#include "state.h"
 #include "lex.yy.h"
 #include "y.tab.h"
 #include "codegen.c"
@@ -7,7 +7,7 @@ int yyparse();
 
 int main(void)
 {
-  parser_state p;
+  state p;
   p.node = NULL;
   yylex_init(&p.scanner);
   yyset_in(stdin, p.scanner);
