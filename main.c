@@ -19,6 +19,7 @@ int main(void)
   scope* s = new_scope();
   codegen(s, p.node);
   print_codes(s);
+  execute_codes(s);
   free_scope(s);
   yylex_destroy(p.scanner);
 }
