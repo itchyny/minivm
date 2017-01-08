@@ -105,7 +105,7 @@ static void codegen(scope* s, node* n) {
   }
 }
 
-#define OP_BINOM(op) \
+#define BINARY_OP(op) \
   do { \
     value rhs = s->stack[--s->stackidx]; \
     value lhs = s->stack[--s->stackidx]; \
@@ -139,10 +139,10 @@ static void execute_codes(scope* s) {
   s->stack = calloc(1024, sizeof(value));
   for (i = 0; i < s->codesidx; i++) {
     switch (GET_OPCODE(s->codes[i])) {
-      case OP_ADD: OP_BINOM(+); break;
-      case OP_MINUS: OP_BINOM(-); break;
-      case OP_TIMES: OP_BINOM(*); break;
-      case OP_DIVIDE: OP_BINOM(/); break;
+      case OP_ADD: BINARY_OP(+); break;
+      case OP_MINUS: BINARY_OP(-); break;
+      case OP_TIMES: BINARY_OP(*); break;
+      case OP_DIVIDE: BINARY_OP(/); break;
       case OP_PRINT_POP: {
           value val = s->stack[--s->stackidx];
           switch (val.type) {
