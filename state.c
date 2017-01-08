@@ -21,15 +21,15 @@ state* new_state() {
     return NULL;
   s->node = NULL;
   s->scanner = NULL;
-  s->current_nodes = s->top_nodes = new_node_pool(NULL);
+  s->current_node_pool = s->top_node_pool = new_node_pool(NULL);
   return s;
 }
 
 node* new_node(state* s) {
-  if (s->current_nodes->idx == s->current_nodes->len) {
-    s->current_nodes = new_node_pool(s->current_nodes);
+  if (s->current_node_pool->idx == s->current_node_pool->len) {
+    s->current_node_pool = new_node_pool(s->current_node_pool);
   }
-  return &s->current_nodes->nodes[s->current_nodes->idx++];
+  return &s->current_node_pool->nodes[s->current_node_pool->idx++];
 }
 
 void free_node_pools(node_pool* np) {
@@ -43,6 +43,6 @@ void free_node_pools(node_pool* np) {
 }
 
 void free_state(state* s) {
-  free_node_pools(s->top_nodes);
+  free_node_pools(s->top_node_pool);
   free(s);
 }

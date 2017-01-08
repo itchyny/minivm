@@ -13,8 +13,8 @@ typedef struct node_pool {
 typedef struct state {
   struct node* node;
   void* scanner;
-  node_pool* top_nodes;
-  node_pool* current_nodes;
+  node_pool* top_node_pool;
+  node_pool* current_node_pool;
 } state;
 
 state* new_state();
