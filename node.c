@@ -27,11 +27,12 @@ void print_binop(node* n, int indent) {
 }
 
 void print_node(node* n, int indent) {
+  int i;
   if (n == NULL)
     return;
   if (indent != 0)
     printf("\n");
-  for (int i = 0; i < indent; i++) {
+  for (i = 0; i < indent; i++) {
     printf(" ");
   }
   printf("(");
