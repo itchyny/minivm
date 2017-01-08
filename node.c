@@ -4,8 +4,8 @@
 #include "state.h"
 #include "y.tab.h"
 
-node* new_cons(state* p, node* car, node* cdr) {
-  node* n = new_node(p);
+node* new_cons(state* s, node* car, node* cdr) {
+  node* n = new_node(s);
   n->car = car;
   n->cdr = cdr;
   return n;
@@ -20,8 +20,8 @@ node* append(node* n, node* m) {
   return n;
 }
 
-node* new_binop(state* p, int op, node* lhs, node* rhs) {
-  return new_cons(p, nint(NODE_BINOP), new_cons(p, nint(op), new_cons(p, lhs, rhs)));
+node* new_binop(state* s, int op, node* lhs, node* rhs) {
+  return new_cons(s, nint(NODE_BINOP), new_cons(s, nint(op), new_cons(s, lhs, rhs)));
 }
 
 void print_binop(node* n, int indent) {

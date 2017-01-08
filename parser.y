@@ -5,13 +5,13 @@
 #include "state.h"
 int yylex();
 int yyerror(state*, char const*);
-#define YYLEX_PARAM p->scanner
-#define cons(a,b) new_cons(p,(a),(b))
-#define binop(op,a,b) new_binop(p,(op),(a),(b))
+#define YYLEX_PARAM s->scanner
+#define cons(a,b) new_cons(s,(a),(b))
+#define binop(op,a,b) new_binop(s,(op),(a),(b))
 %}
 
 %pure-parser
-%parse-param {state *p}
+%parse-param {state *s}
 %lex-param {void *scanner}
 
 %union {
@@ -31,7 +31,7 @@ int yyerror(state*, char const*);
 
 program           : sep_opt statements sep_opt
                     {
-                      p->node = $$ = $2;
+                      s->node = $$ = $2;
                     }
                   ;
 
@@ -91,7 +91,7 @@ primary           : LONG_LITERAL
 
 %%
 
-int yyerror(state *p, char const *str)
+int yyerror(state *s, char const *str)
 {
     fprintf(stderr, "Error: %s\n", str);
     return 0;
