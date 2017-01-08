@@ -20,9 +20,9 @@ typedef struct node {
   struct node *car, *cdr;
 } node;
 
-node* cons(node*, node*);
+node* new_cons();
 node* append(node*, node*);
-node* new_binop(int, node*, node*);
+node* new_binop();
 void print_node(node*, int);
 
 #endif

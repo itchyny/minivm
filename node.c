@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "node.h"
+#include "state.h"
 #include "y.tab.h"
 
-node* cons(node* car, node* cdr) {
-  node* n = (node*)malloc(sizeof(node));
+node* new_cons(state* p, node* car, node* cdr) {
+  node* n = new_node(p);
   n->car = car;
   n->cdr = cdr;
   return n;
@@ -19,8 +20,8 @@ node* append(node* n, node* m) {
   return n;
 }
 
-node* new_binop(int op, node* lhs, node* rhs) {
-  return cons(nint(NODE_BINOP), cons(nint(op), cons(lhs, rhs)));
+node* new_binop(state* p, int op, node* lhs, node* rhs) {
+  return new_cons(p, nint(NODE_BINOP), new_cons(p, nint(op), new_cons(p, lhs, rhs)));
 }
 
 void print_binop(node* n, int indent) {

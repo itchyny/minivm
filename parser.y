@@ -6,6 +6,8 @@
 int yylex();
 int yyerror(state*, char const*);
 #define YYLEX_PARAM p->scanner
+#define cons(a,b) new_cons(p,(a),(b))
+#define binop(op,a,b) new_binop(p,(op),(a),(b))
 %}
 
 %pure-parser
@@ -53,19 +55,19 @@ sep_opt           : sep
 
 expression        : expression PLUS expression
                     {
-                      $$ = new_binop(PLUS, $1, $3);
+                      $$ = binop(PLUS, $1, $3);
                     }
                   | expression MINUS expression
                     {
-                      $$ = new_binop(MINUS, $1, $3);
+                      $$ = binop(MINUS, $1, $3);
                     }
                   | expression TIMES expression
                     {
-                      $$ = new_binop(TIMES, $1, $3);
+                      $$ = binop(TIMES, $1, $3);
                     }
                   | expression DIVIDE expression
                     {
-                      $$ = new_binop(DIVIDE, $1, $3);
+                      $$ = binop(DIVIDE, $1, $3);
                     }
                   | LPAREN expression RPAREN
                     {
