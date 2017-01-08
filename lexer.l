@@ -23,7 +23,7 @@ int yywrap(yyscan_t yyscanner)
 \r\n?|\n   return CR;
 [[:blank:]]  ;
 
-[1-9][0-9]* {
+[1-9][0-9]*|0 {
     yylval->long_value = atol(yytext);
     return LONG_LITERAL;
 }
