@@ -13,23 +13,31 @@ int yywrap(yyscan_t yyscanner)
 
 %%
 
+"="    return EQ;
 "+"    return PLUS;
 "-"    return MINUS;
 "*"    return TIMES;
 "/"    return DIVIDE;
 "("    return LPAREN;
 ")"    return RPAREN;
+"print"    return PRINT;
 
 \r\n?|\n   return CR;
 [[:blank:]]  ;
 
 [1-9][0-9]*|0 {
-    yylval->node = (node*)(yytext);
-    return LONG_LITERAL;
+  yylval->node = (node*)(yytext);
+  return LONG_LITERAL;
 }
 [0-9]+\.[0-9]+ {
-    yylval->node = (node*)(yytext);
-    return DOUBLE_LITERAL;
+  yylval->node = (node*)(yytext);
+  return DOUBLE_LITERAL;
+}
+[A-Za-z][A-Za-z0-9]* {
+  char* s = malloc(yyleng + 1); // TODO: free
+  strcpy(s, yytext);
+  yylval->node = (node*)s;
+  return IDENTIFIER;
 }
 
 %%

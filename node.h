@@ -8,9 +8,12 @@
 
 enum node_type {
   NODE_STMTS,
+  NODE_ASSIGN,
+  NODE_PRINT,
   NODE_BINOP,
   NODE_LONG,
-  NODE_DOUBLE
+  NODE_DOUBLE,
+  NODE_IDENTIFIER,
 };
 
 typedef struct node {

@@ -23,6 +23,11 @@ typedef struct constant_value {
   };
 } constant_value;
 
+typedef struct variable {
+  char* name;
+  value value;
+} variable;
+
 typedef struct env {
   uint32_t codesidx;
   uint32_t codeslen;
@@ -32,6 +37,7 @@ typedef struct env {
   constant_value* constants;
   uint32_t stackidx;
   value* stack;
+  variable* variables;
 } env;
 
 static env* new_env() {
@@ -46,11 +52,14 @@ static env* new_env() {
   e->constants = calloc(e->constantslen, sizeof(constant_value));
   e->stackidx = 0;
   e->stack = NULL;
+  e->variables = calloc(128, sizeof(variable));
   return e;
 }
 
 static void free_env(env* e) {
   free(e->codes);
+  free(e->constants);
+  free(e->variables);
   free(e);
 }
 
@@ -77,6 +86,20 @@ static uint16_t addconstant(env* e, constant_value v) {
   return e->constantsidx++;
 }
 
+static int lookup(env* e, char* name, char set) {
+  int i = 0;
+  while (e->variables[i].name) {
+    if (strcmp(e->variables[i].name, name) == 0)
+      return i;
+    ++i;
+  }
+  if (set) {
+    e->variables[i].name = name;
+    return i;
+  }
+  return -1;
+}
+
 #define GET_OPCODE(i)       ((int)(((uint32_t)(i)) & 0xff))
 #define GET_ARG_A(i)        ((int)((((uint32_t)(i)) >> 8) & 0xffffff))
 
@@ -89,9 +112,16 @@ static void codegen(env* e, node* n) {
       n = n->cdr;
       while (n != NULL) {
         codegen(e, n->car);
-        addcode(e, OP_PRINT_POP);
         n = n->cdr;
       }
+      break;
+    case NODE_ASSIGN:
+      codegen(e, n->cdr->cdr);
+      addcode(e, MK_OP_A(OP_ASSIGN, lookup(e, (char*)n->cdr->car, 1)));
+      break;
+    case NODE_PRINT:
+      codegen(e, n->cdr);
+      addcode(e, OP_PRINT);
       break;
     case NODE_BINOP:
       codegen(e, n->cdr->cdr->car);
@@ -113,6 +143,15 @@ static void codegen(env* e, node* n) {
       constant_value v;
       v.dval = strtod((char*)n->cdr, NULL);
       addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, v)));
+      break;
+    }
+    case NODE_IDENTIFIER: {
+      int index = lookup(e, (char*)n->cdr, 0);
+      if (index < 0) {
+        printf("Unknown variable: %s\n", (char*)n->cdr);
+        exit(1);
+      }
+      addcode(e, MK_OP_A(OP_LOAD_IDENT, index));
       break;
     }
   }
@@ -152,11 +191,14 @@ static void execute_codes(env* e) {
   e->stack = calloc(1024, sizeof(value));
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
+      case OP_ASSIGN:
+        e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
+        break;
       case OP_ADD: BINARY_OP(+); break;
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
       case OP_DIVIDE: BINARY_OP(/); break;
-      case OP_PRINT_POP: {
+      case OP_PRINT: {
           value val = e->stack[--e->stackidx];
           switch (val.type) {
             case VT_LONG: printf("%ld\n", val.lval); break;
@@ -172,6 +214,9 @@ static void execute_codes(env* e) {
         e->stack[e->stackidx].type = VT_DOUBLE;
         e->stack[e->stackidx++].dval = e->constants[GET_ARG_A(e->codes[i])].dval;
         break;
+      case OP_LOAD_IDENT:
+        e->stack[e->stackidx++] = e->variables[GET_ARG_A(e->codes[i])].value;
+        break;
     }
   }
 }
@@ -180,11 +225,12 @@ static void print_codes(env* e) {
   int i;
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
+      case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;
       case OP_DIVIDE: printf("/\n"); break;
-      case OP_PRINT_POP: printf("print\n"); break;
+      case OP_PRINT: printf("print\n"); break;
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
     }

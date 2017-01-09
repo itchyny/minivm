@@ -17,9 +17,9 @@ int yyerror(state*, char const*);
 %union {
   node *node;
 }
-%token <node> LONG_LITERAL DOUBLE_LITERAL;
-%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN CR
-%type <node> program statements expression primary
+%token <node> LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
+%token EQ PLUS MINUS TIMES DIVIDE LPAREN RPAREN PRINT CR
+%type <node> program statements statement expression primary
 
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -32,11 +32,11 @@ program           : sep_opt statements sep_opt
                     }
                   ;
 
-statements        : statements sep expression
+statements        : statements sep statement
                     {
                       $$ = append($1, cons($3, NULL));
                     }
-                  | expression
+                  | statement
                     {
                       $$ = cons(nint(NODE_STMTS), cons($1, NULL));
                     }
@@ -48,6 +48,16 @@ sep               : sep CR
 
 sep_opt           : sep
                   |
+                  ;
+
+statement         : IDENTIFIER EQ expression
+                    {
+                      $$ = cons(nint(NODE_ASSIGN), cons($1, $3));
+                    }
+                  | PRINT expression
+                    {
+                      $$ = cons(nint(NODE_PRINT), $2);
+                    }
                   ;
 
 expression        : expression PLUS expression
@@ -83,6 +93,10 @@ primary           : LONG_LITERAL
                   | DOUBLE_LITERAL
                     {
                       $$ = cons(nint(NODE_DOUBLE), $1);
+                    }
+                  | IDENTIFIER
+                    {
+                      $$ = cons(nint(NODE_IDENTIFIER), $1);
                     }
                   ;
 
