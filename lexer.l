@@ -24,11 +24,11 @@ int yywrap(yyscan_t yyscanner)
 [[:blank:]]  ;
 
 [1-9][0-9]*|0 {
-    yylval->long_value = atol(yytext);
+    yylval->node = (node*)(yytext);
     return LONG_LITERAL;
 }
 [0-9]+\.[0-9]+ {
-    yylval->double_value = strtod(yytext, NULL);
+    yylval->node = (node*)(yytext);
     return DOUBLE_LITERAL;
 }
 

@@ -16,11 +16,8 @@ int yyerror(state*, char const*);
 
 %union {
   node *node;
-  long long_value;
-  double double_value;
 }
-%token <long_value> LONG_LITERAL;
-%token <double_value> DOUBLE_LITERAL;
+%token <node> LONG_LITERAL DOUBLE_LITERAL;
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN CR
 %type <node> program statements expression primary
 
@@ -81,11 +78,11 @@ expression        : expression PLUS expression
 
 primary           : LONG_LITERAL
                     {
-                      $$ = cons(nint(NODE_LONG), nptr($1));
+                      $$ = cons(nint(NODE_LONG), $1);
                     }
                   | DOUBLE_LITERAL
                     {
-                      $$ = cons(nint(NODE_DOUBLE), nptr($1));
+                      $$ = cons(nint(NODE_DOUBLE), $1);
                     }
                   ;
 

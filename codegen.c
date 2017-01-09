@@ -96,12 +96,18 @@ static void codegen(env* e, node* n) {
         case DIVIDE: addcode(e, OP_DIVIDE); break;
       }
       break;
-    case NODE_DOUBLE:
-      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, (intptr_t)(n->cdr))));
+    case NODE_LONG: {
+      long l = atol((char*)n->cdr);
+      printf("NODE_LONG: %s %ld\n", (char*)n->cdr, l);
+      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, (intptr_t)(nptr(l)))));
       break;
-    case NODE_LONG:
-      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, (intptr_t)(n->cdr))));
+    }
+    case NODE_DOUBLE: {
+      double d = strtod((char*)n->cdr, NULL);
+      printf("NODE_DOUBLE: %s %lf\n", (char*)n->cdr, d);
+      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, (intptr_t)(nptr(d)))));
       break;
+    }
   }
 }
 

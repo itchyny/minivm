@@ -60,10 +60,10 @@ void print_node(node* n, int indent) {
       print_binop(n->cdr, indent);
       break;
     case NODE_DOUBLE:
-      printf("double %lf", doublen(n->cdr));
+      printf("double %lf", strtod((char*)n->cdr, NULL));
       break;
     case NODE_LONG:
-      printf("long %ld", longn(n->cdr));
+      printf("long %ld", atol((char*)n->cdr));
       break;
   }
   printf(")");
