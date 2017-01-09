@@ -4,17 +4,17 @@
 #include "node.h"
 
 typedef struct node_pool {
-  uint16_t idx;
-  uint16_t len;
+  uint16_t index;
+  uint16_t length;
   struct node* nodes;
-  struct node_pool* next;
+  struct node_pool* next_pool;
 } node_pool;
 
 typedef struct state {
   struct node* node;
   void* scanner;
-  node_pool* top_node_pool;
-  node_pool* current_node_pool;
+  node_pool* top_pool;
+  node_pool* current_pool;
 } state;
 
 state* new_state();
