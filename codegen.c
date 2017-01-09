@@ -16,13 +16,20 @@ typedef struct value {
   };
 } value;
 
+typedef struct constant_value {
+  union {
+    long lval;
+    double dval;
+  };
+} constant_value;
+
 typedef struct env {
   uint32_t codesidx;
   uint32_t codeslen;
   uint32_t* codes;
   uint32_t constantsidx;
   uint32_t constantslen;
-  intptr_t* constants;
+  constant_value* constants;
   uint32_t stackidx;
   value* stack;
 } env;
@@ -36,7 +43,7 @@ static env* new_env() {
   e->codes = calloc(e->codeslen, sizeof(uint32_t));
   e->constantsidx = 0;
   e->constantslen = 128;
-  e->constants = calloc(e->constantslen, sizeof(intptr_t));
+  e->constants = calloc(e->constantslen, sizeof(constant_value));
   e->stackidx = 0;
   e->stack = NULL;
   return e;
@@ -58,15 +65,15 @@ static void addcode(env* e, uint32_t c) {
   e->codes[e->codesidx++] = c;
 }
 
-static uint16_t addconstant(env* e, intptr_t c) {
+static uint16_t addconstant(env* e, constant_value v) {
   if (e->constantsidx == e->constantslen) {
-    intptr_t* old_constants = e->constants;
-    e->constants = calloc(e->constantslen * 2, sizeof(intptr_t));
-    memcpy(e->constants, old_constants, e->constantslen * sizeof(intptr_t));
+    constant_value* old_constants = e->constants;
+    e->constants = calloc(e->constantslen * 2, sizeof(constant_value));
+    memcpy(e->constants, old_constants, e->constantslen * sizeof(constant_value));
     e->constantslen *= 2;
     free(old_constants);
   }
-  e->constants[e->constantsidx] = c;
+  e->constants[e->constantsidx] = v;
   return e->constantsidx++;
 }
 
@@ -97,15 +104,15 @@ static void codegen(env* e, node* n) {
       }
       break;
     case NODE_LONG: {
-      long l = atol((char*)n->cdr);
-      printf("NODE_LONG: %s %ld\n", (char*)n->cdr, l);
-      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, (intptr_t)(nptr(l)))));
+      constant_value v;
+      v.lval = atol((char*)n->cdr);
+      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v)));
       break;
     }
     case NODE_DOUBLE: {
-      double d = strtod((char*)n->cdr, NULL);
-      printf("NODE_DOUBLE: %s %lf\n", (char*)n->cdr, d);
-      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, (intptr_t)(nptr(d)))));
+      constant_value v;
+      v.dval = strtod((char*)n->cdr, NULL);
+      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, v)));
       break;
     }
   }
@@ -159,11 +166,11 @@ static void execute_codes(env* e) {
         break;
       case OP_LOAD_LONG:
         e->stack[e->stackidx].type = VT_LONG;
-        e->stack[e->stackidx++].lval = longn(e->constants[GET_ARG_A(e->codes[i])]);
+        e->stack[e->stackidx++].lval = e->constants[GET_ARG_A(e->codes[i])].lval;
         break;
       case OP_LOAD_DOUBLE:
         e->stack[e->stackidx].type = VT_DOUBLE;
-        e->stack[e->stackidx++].dval = doublen(e->constants[GET_ARG_A(e->codes[i])]);
+        e->stack[e->stackidx++].dval = e->constants[GET_ARG_A(e->codes[i])].dval;
         break;
     }
   }
@@ -178,8 +185,8 @@ static void print_codes(env* e) {
       case OP_TIMES: printf("*\n"); break;
       case OP_DIVIDE: printf("/\n"); break;
       case OP_PRINT_POP: printf("print\n"); break;
-      case OP_LOAD_LONG: printf("long %ld\n", longn(e->constants[GET_ARG_A(e->codes[i])])); break;
-      case OP_LOAD_DOUBLE: printf("double %lf\n", doublen(e->constants[GET_ARG_A(e->codes[i])])); break;
+      case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
+      case OP_LOAD_DOUBLE: printf("double %lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
     }
   }
 }

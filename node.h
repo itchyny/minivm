@@ -5,9 +5,6 @@
 
 #define nint(x) ((node*)(intptr_t)(x))
 #define intn(x) ((int)(intptr_t)(x))
-#define nptr(x) ((node*)*(intptr_t*)&(x))
-#define doublen(x) (*(double*)&(x))
-#define longn(x) (*(long*)&(x))
 
 enum node_type {
   NODE_STMTS,
