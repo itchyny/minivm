@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "node.h"
 #include "opcode.h"
 
 enum value_type {
+  VT_BOOL,
   VT_LONG,
   VT_DOUBLE,
 };
@@ -11,6 +13,7 @@ enum value_type {
 typedef struct value {
   int type;
   union {
+    bool bval;
     long lval;
     double dval;
   };
@@ -18,6 +21,7 @@ typedef struct value {
 
 typedef struct constant_value {
   union {
+    bool bval;
     long lval;
     double dval;
   };
@@ -133,6 +137,12 @@ static void codegen(env* e, node* n) {
         case DIVIDE: addcode(e, OP_DIVIDE); break;
       }
       break;
+    case NODE_BOOL: {
+      constant_value v;
+      v.bval = (bool)((intptr_t)n->cdr == 1);
+      addcode(e, MK_OP_A(OP_LOAD_BOOL, addconstant(e, v)));
+      break;
+    }
     case NODE_LONG: {
       constant_value v;
       v.lval = atol((char*)n->cdr);
@@ -201,10 +211,20 @@ static void execute_codes(env* e) {
       case OP_PRINT: {
           value val = e->stack[--e->stackidx];
           switch (val.type) {
+            case VT_BOOL:
+              if (val.bval)
+                printf("true\n");
+              else
+                printf("false\n");
+              break;
             case VT_LONG: printf("%ld\n", val.lval); break;
             case VT_DOUBLE: printf("%lf\n", val.dval); break;
           }
         }
+        break;
+      case OP_LOAD_BOOL:
+        e->stack[e->stackidx].type = VT_BOOL;
+        e->stack[e->stackidx++].bval = e->constants[GET_ARG_A(e->codes[i])].bval;
         break;
       case OP_LOAD_LONG:
         e->stack[e->stackidx].type = VT_LONG;
@@ -231,6 +251,12 @@ static void print_codes(env* e) {
       case OP_TIMES: printf("*\n"); break;
       case OP_DIVIDE: printf("/\n"); break;
       case OP_PRINT: printf("print\n"); break;
+      case OP_LOAD_BOOL:
+        if (e->constants[GET_ARG_A(e->codes[i])].bval)
+          printf("bool true\n");
+        else
+          printf("bool false\n");
+        break;
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
     }

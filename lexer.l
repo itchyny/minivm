@@ -25,6 +25,14 @@ int yywrap(yyscan_t yyscanner)
 \r\n?|\n   return CR;
 [[:blank:]]  ;
 
+"true" {
+  yylval->node = (node*)(1);
+  return BOOL_LITERAL;
+}
+"false" {
+  yylval->node = (node*)(0);
+  return BOOL_LITERAL;
+}
 [1-9][0-9]*|0 {
   yylval->node = (node*)(yytext);
   return LONG_LITERAL;

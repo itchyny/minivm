@@ -67,6 +67,12 @@ void print_node(node* n, int indent) {
     case NODE_BINOP:
       print_binop(n->cdr, indent);
       break;
+    case NODE_BOOL:
+      if ((intptr_t)n->cdr == 1)
+        printf("bool true");
+      else
+        printf("bool false");
+      break;
     case NODE_DOUBLE:
       printf("double %lf", strtod((char*)n->cdr, NULL));
       break;
