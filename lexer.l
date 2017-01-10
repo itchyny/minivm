@@ -25,6 +25,9 @@ int yywrap(yyscan_t yyscanner)
 \r\n?|\n   return CR;
 [[:blank:]]  ;
 
+"if"       return IF;
+"endif"    return ENDIF;
+
 "true" {
   yylval->node = (node*)(1);
   return BOOL_LITERAL;

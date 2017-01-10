@@ -60,6 +60,11 @@ void print_node(node* n, int indent) {
       printf("let %c", *(char*)n->cdr->car);
       print_node(n->cdr->cdr, indent + 2);
       break;
+    case NODE_IF:
+      printf("if");
+      print_node(n->cdr->car, indent + 2);
+      print_node(n->cdr->cdr, indent + 2);
+      break;
     case NODE_PRINT:
       printf("print");
       print_node(n->cdr, indent + 2);

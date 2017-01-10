@@ -33,8 +33,8 @@ typedef struct variable {
 } variable;
 
 typedef struct env {
-  uint32_t codesidx;
-  uint32_t codeslen;
+  uint16_t codesidx;
+  uint16_t codeslen;
   uint32_t* codes;
   uint32_t constantsidx;
   uint32_t constantslen;
@@ -67,7 +67,7 @@ static void free_env(env* e) {
   free(e);
 }
 
-static void addcode(env* e, uint32_t c) {
+static uint16_t addcode(env* e, uint32_t c) {
   if (e->codesidx == e->codeslen) {
     uint32_t* old_codes = e->codes;
     e->codes = calloc(e->codeslen * 2, sizeof(uint32_t));
@@ -75,7 +75,12 @@ static void addcode(env* e, uint32_t c) {
     e->codeslen *= 2;
     free(old_codes);
   }
-  e->codes[e->codesidx++] = c;
+  e->codes[e->codesidx] = c;
+  return e->codesidx++;
+}
+
+static void setcode(env* e, uint16_t index, uint32_t c) {
+  e->codes[index] = c;
 }
 
 static uint16_t addconstant(env* e, constant_value v) {
@@ -110,49 +115,60 @@ static int lookup(env* e, char* name, char set) {
 #define MK_ARG_A(a)         ((intptr_t)((a) & 0xffffff) << 8)
 #define MK_OP_A(op,a)       (op|MK_ARG_A(a))
 
-static void codegen(env* e, node* n) {
+static uint16_t codegen(env* e, node* n) {
+  uint16_t count = 0, diff = 0, index = 0;
   switch (intn(n->car)) {
     case NODE_STMTS:
       n = n->cdr;
       while (n != NULL) {
-        codegen(e, n->car);
+        count += codegen(e, n->car);
         n = n->cdr;
       }
       break;
     case NODE_ASSIGN:
-      codegen(e, n->cdr->cdr);
+      count += codegen(e, n->cdr->cdr) + 1;
       addcode(e, MK_OP_A(OP_ASSIGN, lookup(e, (char*)n->cdr->car, 1)));
       break;
+    case NODE_IF:
+      count += codegen(e, n->cdr->car) + 1;
+      index = addcode(e, 0);
+      count += (diff = codegen(e, n->cdr->cdr));
+      setcode(e, index, MK_OP_A(OP_JMP_NOT, diff));
+      break;
     case NODE_PRINT:
-      codegen(e, n->cdr);
+      count += codegen(e, n->cdr) + 1;
       addcode(e, OP_PRINT);
       break;
     case NODE_BINOP:
-      codegen(e, n->cdr->cdr->car);
-      codegen(e, n->cdr->cdr->cdr);
+      count += codegen(e, n->cdr->cdr->car);
+      count += codegen(e, n->cdr->cdr->cdr);
       switch (intn(n->cdr->car)) {
         case PLUS: addcode(e, OP_ADD); break;
         case MINUS: addcode(e, OP_MINUS); break;
         case TIMES: addcode(e, OP_TIMES); break;
         case DIVIDE: addcode(e, OP_DIVIDE); break;
       }
+      ++count;
       break;
     case NODE_BOOL: {
       constant_value v;
       v.bval = (bool)((intptr_t)n->cdr == 1);
       addcode(e, MK_OP_A(OP_LOAD_BOOL, addconstant(e, v)));
+      ++count;
       break;
     }
     case NODE_LONG: {
       constant_value v;
       v.lval = atol((char*)n->cdr);
       addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v)));
+      ++count;
       break;
     }
     case NODE_DOUBLE: {
       constant_value v;
       v.dval = strtod((char*)n->cdr, NULL);
       addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, v)));
+      ++count;
       break;
     }
     case NODE_IDENTIFIER: {
@@ -162,9 +178,11 @@ static void codegen(env* e, node* n) {
         exit(1);
       }
       addcode(e, MK_OP_A(OP_LOAD_IDENT, index));
+      ++count;
       break;
     }
   }
+  return count;
 }
 
 #define BINARY_OP(op) \
@@ -197,29 +215,38 @@ static void codegen(env* e, node* n) {
   } while(0);
 
 static void execute_codes(env* e) {
-  int i;
+  int i; value v; bool b;
   e->stack = calloc(1024, sizeof(value));
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_ASSIGN:
         e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
+      case OP_JMP_NOT:
+        v = e->stack[--e->stackidx];
+        b = false;
+        switch (v.type) {
+          case VT_BOOL: b = v.bval == false; break;
+          case VT_LONG: b = v.lval == 0.0; break;
+          case VT_DOUBLE: b = v.dval == 0; break;
+        }
+        if (b) i += GET_ARG_A(e->codes[i]);
+        break;
       case OP_ADD: BINARY_OP(+); break;
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
       case OP_DIVIDE: BINARY_OP(/); break;
-      case OP_PRINT: {
-          value val = e->stack[--e->stackidx];
-          switch (val.type) {
-            case VT_BOOL:
-              if (val.bval)
-                printf("true\n");
-              else
-                printf("false\n");
-              break;
-            case VT_LONG: printf("%ld\n", val.lval); break;
-            case VT_DOUBLE: printf("%lf\n", val.dval); break;
-          }
+      case OP_PRINT:
+        v = e->stack[--e->stackidx];
+        switch (v.type) {
+          case VT_BOOL:
+            if (v.bval)
+              printf("true\n");
+            else
+              printf("false\n");
+            break;
+          case VT_LONG: printf("%ld\n", v.lval); break;
+          case VT_DOUBLE: printf("%lf\n", v.dval); break;
         }
         break;
       case OP_LOAD_BOOL:
@@ -246,6 +273,7 @@ static void print_codes(env* e) {
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
+      case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;
@@ -259,6 +287,7 @@ static void print_codes(env* e) {
         break;
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
+      case OP_LOAD_IDENT: printf("load %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
     }
   }
 }

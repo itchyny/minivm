@@ -19,6 +19,7 @@ int yyerror(state*, char const*);
 }
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
 %token EQ PLUS MINUS TIMES DIVIDE LPAREN RPAREN PRINT CR
+%token IF ENDIF
 %type <node> program statements statement expression primary
 
 %left PLUS MINUS
@@ -53,6 +54,10 @@ sep_opt           : sep
 statement         : IDENTIFIER EQ expression
                     {
                       $$ = cons(nint(NODE_ASSIGN), cons($1, $3));
+                    }
+                  | IF expression sep statements sep ENDIF
+                    {
+                      $$ = cons(nint(NODE_IF), cons($2, $4));
                     }
                   | PRINT expression
                     {
