@@ -190,8 +190,27 @@ static uint16_t codegen(env* e, node* n) {
     value rhs = e->stack[--e->stackidx]; \
     value lhs = e->stack[--e->stackidx]; \
     switch (lhs.type) { \
+      case VT_BOOL: \
+        switch (rhs.type) { \
+          case VT_BOOL: \
+            e->stack[e->stackidx].type = VT_LONG; \
+            e->stack[e->stackidx++].lval = (lhs.lval ? 1 : 0) op (rhs.bval ? 1 : 0); \
+            break; \
+          case VT_LONG: \
+            e->stack[e->stackidx].type = VT_LONG; \
+            e->stack[e->stackidx++].lval = (lhs.lval ? 1 : 0) op rhs.lval; \
+            break; \
+          case VT_DOUBLE: \
+            e->stack[e->stackidx].type = VT_DOUBLE; \
+            e->stack[e->stackidx++].dval = (lhs.lval ? 1.0 : 0.0) op rhs.dval; \
+            break; \
+        } \
+        break; \
       case VT_LONG: \
         switch (rhs.type) { \
+          case VT_BOOL: \
+            e->stack[e->stackidx++].lval = lhs.lval op (rhs.bval ? 1 : 0); \
+            break; \
           case VT_LONG: \
             e->stack[e->stackidx++].lval = lhs.lval op rhs.lval; \
             break; \
@@ -203,6 +222,9 @@ static uint16_t codegen(env* e, node* n) {
         break; \
       case VT_DOUBLE: \
         switch (rhs.type) { \
+          case VT_BOOL: \
+            e->stack[e->stackidx++].dval = lhs.lval op (rhs.bval ? 1.0 : 0.0); \
+            break; \
           case VT_LONG: \
             e->stack[e->stackidx++].dval = lhs.dval op (double)rhs.lval; \
             break; \
