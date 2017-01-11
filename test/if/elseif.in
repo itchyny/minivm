@@ -1,0 +1,24 @@
+if false
+  a = 10
+  print a
+elseif false
+  b = 11
+  print b
+elseif true
+  c = 12
+  print c
+else
+  d = 13
+  print d
+endif
+
+e = 14
+print e
+
+if false
+  a = 10
+  print a
+elseif true
+  b = 11
+  print b
+endif
