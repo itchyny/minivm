@@ -268,7 +268,7 @@ static void execute_codes(env* e) {
               printf("false\n");
             break;
           case VT_LONG: printf("%ld\n", v.lval); break;
-          case VT_DOUBLE: printf("%lf\n", v.dval); break;
+          case VT_DOUBLE: printf("%.9lf\n", v.dval); break;
         }
         break;
       case OP_LOAD_BOOL:
@@ -308,7 +308,7 @@ static void print_codes(env* e) {
           printf("bool false\n");
         break;
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
-      case OP_LOAD_DOUBLE: printf("double %lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
+      case OP_LOAD_DOUBLE: printf("double %.9lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
       case OP_LOAD_IDENT: printf("load %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
     }
   }
