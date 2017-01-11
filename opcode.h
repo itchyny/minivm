@@ -4,6 +4,7 @@
 enum OP_CODE {
   OP_ASSIGN,
   OP_JMP,
+  OP_JMP_IF_BACK,
   OP_JMP_NOT,
   OP_PRINT,
   OP_ADD,

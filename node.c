@@ -73,6 +73,11 @@ void print_node(node* n, int indent) {
         print_node(n->cdr->cdr->cdr, indent + 2);
       }
       break;
+    case NODE_WHILE:
+      printf("while");
+      print_node(n->cdr->car, indent + 2);
+      print_node(n->cdr->cdr, indent + 2);
+      break;
     case NODE_PRINT:
       printf("print");
       print_node(n->cdr, indent + 2);

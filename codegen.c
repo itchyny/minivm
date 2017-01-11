@@ -143,6 +143,15 @@ static uint16_t codegen(env* e, node* n) {
       setcode(e, index0, MK_OP_A(OP_JMP_NOT, diff0));
       break;
     }
+    case NODE_WHILE: {
+      uint16_t diff0, diff1, index;
+      index = addcode(e, 0); ++count;
+      count += (diff0 = codegen(e, n->cdr->cdr));
+      setcode(e, index, MK_OP_A(OP_JMP, diff0));
+      count += (diff1 = codegen(e, n->cdr->car));
+      addcode(e, MK_OP_A(OP_JMP_IF_BACK, diff0 + diff1 + 1)); ++count;
+      break;
+    }
     case NODE_PRINT:
       count += codegen(e, n->cdr) + 1;
       addcode(e, OP_PRINT);
@@ -244,8 +253,18 @@ static uint16_t codegen(env* e, node* n) {
     } \
   } while(0);
 
+inline static bool evaluate_bool(env* e) {
+  value v = e->stack[--e->stackidx];
+  switch (v.type) {
+    case VT_BOOL: return v.bval;
+    case VT_LONG: return v.lval != 0.0;
+    case VT_DOUBLE: return v.dval != 0;
+  }
+  return true;
+}
+
 static void execute_codes(env* e) {
-  int i; value v; bool b;
+  int i; value v;
   e->stack = calloc(1024, sizeof(value));
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
@@ -255,15 +274,13 @@ static void execute_codes(env* e) {
       case OP_JMP:
         i += GET_ARG_A(e->codes[i]);
         break;
+      case OP_JMP_IF_BACK:
+        if (evaluate_bool(e))
+          i -= GET_ARG_A(e->codes[i]);
+        break;
       case OP_JMP_NOT:
-        v = e->stack[--e->stackidx];
-        b = false;
-        switch (v.type) {
-          case VT_BOOL: b = v.bval == false; break;
-          case VT_LONG: b = v.lval == 0.0; break;
-          case VT_DOUBLE: b = v.dval == 0; break;
-        }
-        if (b) i += GET_ARG_A(e->codes[i]);
+        if (!evaluate_bool(e))
+          i += GET_ARG_A(e->codes[i]);
         break;
       case OP_ADD: BINARY_OP(+); break;
       case OP_MINUS: BINARY_OP(-); break;
@@ -307,6 +324,7 @@ static void print_codes(env* e) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_IF_BACK: printf("jmp_if_back %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;

@@ -10,6 +10,7 @@ enum node_type {
   NODE_STMTS,
   NODE_ASSIGN,
   NODE_IF,
+  NODE_WHILE,
   NODE_PRINT,
   NODE_BINOP,
   NODE_BOOL,
