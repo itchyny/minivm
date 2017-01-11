@@ -1,0 +1,20 @@
+if true
+  print 3 * 4
+endif
+
+if false
+  print 15
+endif
+
+a = true
+if a
+  print 18
+endif
+
+if 1
+  print 20
+endif
+
+if 0
+  print 30
+endif
