@@ -116,7 +116,7 @@ static int lookup(env* e, char* name, char set) {
 #define MK_OP_A(op,a)       (op|MK_ARG_A(a))
 
 static uint16_t codegen(env* e, node* n) {
-  uint16_t count = 0, diff = 0, index = 0;
+  uint16_t count = 0;
   switch (intn(n->car)) {
     case NODE_STMTS:
       n = n->cdr;
@@ -129,12 +129,20 @@ static uint16_t codegen(env* e, node* n) {
       count += codegen(e, n->cdr->cdr) + 1;
       addcode(e, MK_OP_A(OP_ASSIGN, lookup(e, (char*)n->cdr->car, 1)));
       break;
-    case NODE_IF:
+    case NODE_IF: {
+      uint16_t diff0, diff1, index0, index1;
       count += codegen(e, n->cdr->car) + 1;
-      index = addcode(e, 0);
-      count += (diff = codegen(e, n->cdr->cdr));
-      setcode(e, index, MK_OP_A(OP_JMP_NOT, diff));
+      index0 = addcode(e, 0);
+      count += (diff0 = codegen(e, n->cdr->cdr->car));
+      if (n->cdr->cdr->cdr != NULL) {
+        index1 = addcode(e, 0);
+        count += (diff1 = codegen(e, n->cdr->cdr->cdr)) + 1;
+        setcode(e, index1, MK_OP_A(OP_JMP, diff1));
+        ++diff0;
+      }
+      setcode(e, index0, MK_OP_A(OP_JMP_NOT, diff0));
       break;
+    }
     case NODE_PRINT:
       count += codegen(e, n->cdr) + 1;
       addcode(e, OP_PRINT);
@@ -244,6 +252,9 @@ static void execute_codes(env* e) {
       case OP_ASSIGN:
         e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
+      case OP_JMP:
+        i += GET_ARG_A(e->codes[i]);
+        break;
       case OP_JMP_NOT:
         v = e->stack[--e->stackidx];
         b = false;
@@ -295,6 +306,7 @@ static void print_codes(env* e) {
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
+      case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;

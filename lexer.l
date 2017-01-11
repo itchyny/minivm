@@ -26,6 +26,7 @@ int yywrap(yyscan_t yyscanner)
 [[:blank:]]  ;
 
 "if"       return IF;
+"else"     return ELSE;
 "endif"    return ENDIF;
 
 "true" {

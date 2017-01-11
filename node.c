@@ -63,7 +63,15 @@ void print_node(node* n, int indent) {
     case NODE_IF:
       printf("if");
       print_node(n->cdr->car, indent + 2);
-      print_node(n->cdr->cdr, indent + 2);
+      print_node(n->cdr->cdr->car, indent + 2);
+      if (n->cdr->cdr->cdr != NULL) {
+        printf("\n");
+        for (i = 0; i < indent; i++) {
+          printf(" ");
+        }
+        printf("else");
+        print_node(n->cdr->cdr->cdr, indent + 2);
+      }
       break;
     case NODE_PRINT:
       printf("print");

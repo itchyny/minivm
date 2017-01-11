@@ -19,8 +19,8 @@ int yyerror(state*, char const*);
 }
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
 %token EQ PLUS MINUS TIMES DIVIDE LPAREN RPAREN PRINT CR
-%token IF ENDIF
-%type <node> program statements statement expression primary
+%token IF ELSE ENDIF
+%type <node> program statements statement else_opt expression primary
 
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -55,13 +55,23 @@ statement         : IDENTIFIER EQ expression
                     {
                       $$ = cons(nint(NODE_ASSIGN), cons($1, $3));
                     }
-                  | IF expression sep statements sep ENDIF
+                  | IF expression sep statements sep else_opt ENDIF
                     {
-                      $$ = cons(nint(NODE_IF), cons($2, $4));
+                      $$ = cons(nint(NODE_IF), cons($2, cons($4, $6)));
                     }
                   | PRINT expression
                     {
                       $$ = cons(nint(NODE_PRINT), $2);
+                    }
+                  ;
+
+else_opt          :
+                    {
+                      $$ = NULL;
+                    }
+                  | ELSE sep statements sep
+                    {
+                      $$ = $3;
                     }
                   ;
 
