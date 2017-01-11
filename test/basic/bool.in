@@ -1,0 +1,10 @@
+t = true
+f = false
+print t
+print f
+print t + t
+print t * f
+print f / t
+print t / (f / t + t)
+print t * 3.14 + f / 3.14
+print 3.14 / (t + f)
