@@ -5,7 +5,7 @@
 #include "codegen.c"
 int yyparse();
 
-int main(void)
+int main(int argc, const char* argv[])
 {
   state* s = new_state();
   if (s == NULL)
@@ -16,10 +16,12 @@ int main(void)
     yylex_destroy(s->scanner);
     exit(1);
   }
-  print_node(s->node, 0);
+  if (argc > 1 && !strcmp(argv[1], "--debug"))
+    print_node(s->node, 0);
   env* e = new_env();
   codegen(e, s->node);
-  print_codes(e);
+  if (argc > 1 && !strcmp(argv[1], "--debug"))
+    print_codes(e);
   execute_codes(e);
   free_env(e);
   yylex_destroy(s->scanner);
