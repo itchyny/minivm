@@ -7,5 +7,10 @@ y.tab.c y.tab.h: parser.y node.c node.h
 lex.yy.c lex.yy.h: lexer.l
 	lex --header-file=lex.yy.h $<
 
+test:
+	@bash test/test.sh
+
 clean:
 	rm -f svm y.tab.c y.tab.h y.output lex.yy.c lex.yy.h
+
+.PHONY: test clean
