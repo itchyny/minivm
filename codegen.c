@@ -127,7 +127,7 @@ static uint16_t codegen(env* e, node* n) {
       break;
     case NODE_ASSIGN:
       count += codegen(e, n->cdr->cdr) + 1;
-      addcode(e, MK_OP_A(OP_ASSIGN, lookup(e, (char*)n->cdr->car, 1)));
+      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1)));
       break;
     case NODE_IF: {
       int16_t diff0, diff1; uint16_t index0, index1;
@@ -264,7 +264,7 @@ static void execute_codes(env* e) {
       case OP_POP:
         --e->stackidx;
         break;
-      case OP_ASSIGN:
+      case OP_LET:
         e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
       case OP_JMP:
@@ -339,7 +339,7 @@ static void print_codes(env* e) {
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_POP: printf("pop\n"); break;
-      case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
+      case OP_LET: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;

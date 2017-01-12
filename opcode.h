@@ -3,7 +3,7 @@
 
 enum OP_CODE {
   OP_POP,
-  OP_ASSIGN,
+  OP_LET,
   OP_JMP,
   OP_JMP_IF,
   OP_JMP_IF_KEEP,
