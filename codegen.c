@@ -131,12 +131,12 @@ static uint16_t codegen(env* e, node* n) {
       break;
     case NODE_IF: {
       uint16_t diff0, diff1, index0, index1;
-      count += codegen(e, n->cdr->car) + 1;
-      index0 = addcode(e, 0);
+      count += codegen(e, n->cdr->car);
+      index0 = addcode(e, 0); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr->car));
       if (n->cdr->cdr->cdr != NULL) {
-        index1 = addcode(e, 0);
-        count += (diff1 = codegen(e, n->cdr->cdr->cdr)) + 1;
+        index1 = addcode(e, 0); ++count;
+        count += (diff1 = codegen(e, n->cdr->cdr->cdr));
         setcode(e, index1, MK_OP_A(OP_JMP, diff1));
         ++diff0;
       }
