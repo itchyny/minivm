@@ -1,0 +1,27 @@
+a = true
+b = true
+if a && b
+  print 0
+endif
+
+a = true
+b = false
+if a && b
+  print 1
+endif
+
+a = false
+b = true
+if a && b
+  print 2
+endif
+
+a = false
+b = false
+if a && b || true && true
+  print 3
+endif
+
+if (false || true) && (true || false)
+  print 4
+endif
