@@ -67,6 +67,12 @@ static void free_env(env* e) {
   free(e);
 }
 
+#define GET_OPCODE(i)       ((uint8_t)(i & 0xff))
+#define GET_ARG_A(i)        ((int16_t)((i >> 8) & 0xffff))
+
+#define MK_ARG_A(a)         ((intptr_t)((a) & 0xffff) << 8)
+#define MK_OP_A(op,a)       (op|MK_ARG_A(a))
+
 static uint16_t addcode(env* e, uint32_t c) {
   if (e->codesidx == e->codeslen) {
     uint32_t* old_codes = e->codes;
@@ -79,8 +85,8 @@ static uint16_t addcode(env* e, uint32_t c) {
   return e->codesidx++;
 }
 
-static void setcode(env* e, uint16_t index, uint32_t c) {
-  e->codes[index] = c;
+static void operand(env* e, uint16_t index, int32_t a) {
+  e->codes[index] |= MK_ARG_A(a);
 }
 
 static uint16_t addconstant(env* e, constant_value v) {
@@ -109,12 +115,6 @@ static int lookup(env* e, char* name, char set) {
   return -1;
 }
 
-#define GET_OPCODE(i)       ((uint8_t)(i & 0xff))
-#define GET_ARG_A(i)        ((int16_t)((i >> 8) & 0xffff))
-
-#define MK_ARG_A(a)         ((intptr_t)((a) & 0xffff) << 8)
-#define MK_OP_A(op,a)       (op|MK_ARG_A(a))
-
 static uint16_t codegen(env* e, node* n) {
   uint16_t count = 0;
   switch (intn(n->car)) {
@@ -132,22 +132,22 @@ static uint16_t codegen(env* e, node* n) {
     case NODE_IF: {
       int16_t diff0, diff1; uint16_t index0, index1;
       count += codegen(e, n->cdr->car);
-      index0 = addcode(e, 0); ++count;
+      index0 = addcode(e, OP_JMP_NOT); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr->car));
       if (n->cdr->cdr->cdr != NULL) {
-        index1 = addcode(e, 0); ++count;
+        index1 = addcode(e, OP_JMP); ++count;
         count += (diff1 = codegen(e, n->cdr->cdr->cdr));
-        setcode(e, index1, MK_OP_A(OP_JMP, diff1));
+        operand(e, index1, diff1);
         ++diff0;
       }
-      setcode(e, index0, MK_OP_A(OP_JMP_NOT, diff0));
+      operand(e, index0, diff0);
       break;
     }
     case NODE_WHILE: {
       int16_t diff0, diff1; uint16_t index;
-      index = addcode(e, 0); ++count;
+      index = addcode(e, OP_JMP); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr));
-      setcode(e, index, MK_OP_A(OP_JMP, diff0));
+      operand(e, index, diff0);
       count += (diff1 = codegen(e, n->cdr->car));
       addcode(e, MK_OP_A(OP_JMP_IF, -diff0 - diff1 - 1)); ++count;
       break;
@@ -160,16 +160,16 @@ static uint16_t codegen(env* e, node* n) {
       count += codegen(e, n->cdr->cdr->car);
       if (intn(n->cdr->car) == AND) {
         int16_t diff; uint16_t index;
-        index = addcode(e, 0); ++count;
+        index = addcode(e, OP_JMP_NOT_KEEP); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
-        setcode(e, index, MK_OP_A(OP_JMP_NOT_KEEP, diff + 1));
+        operand(e, index, diff + 1);
       } else if (intn(n->cdr->car) == OR) {
         int16_t diff; uint16_t index;
-        index = addcode(e, 0); ++count;
+        index = addcode(e, OP_JMP_IF_KEEP); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
-        setcode(e, index, MK_OP_A(OP_JMP_IF_KEEP, diff + 1));
+        operand(e, index, diff + 1);
       } else {
         count += codegen(e, n->cdr->cdr->cdr);
         switch (intn(n->cdr->car)) {
