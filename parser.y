@@ -23,6 +23,8 @@ int yyerror(state*, char const*);
 %token IF ELSEIF ELSE ENDIF WHILE ENDWHILE
 %type <node> program statements statement else_opt expression primary
 
+%left OR
+%left AND
 %nonassoc EQEQ
 %left GT GE LT LE
 %left PLUS MINUS
@@ -86,7 +88,15 @@ else_opt          :
                     }
                   ;
 
-expression        : expression PLUS expression
+expression        : expression OR expression
+                    {
+                      $$ = binop(OR, $1, $3);
+                    }
+                  | expression AND expression
+                    {
+                      $$ = binop(AND, $1, $3);
+                    }
+                  | expression PLUS expression
                     {
                       $$ = binop(PLUS, $1, $3);
                     }

@@ -2,10 +2,14 @@
 #define OPCODE_H
 
 enum OP_CODE {
+  OP_POP,
   OP_ASSIGN,
   OP_JMP,
+  OP_JMP_IF,
   OP_JMP_IF_BACK,
+  OP_JMP_IF_KEEP,
   OP_JMP_NOT,
+  OP_JMP_NOT_KEEP,
   OP_PRINT,
   OP_ADD,
   OP_MINUS,

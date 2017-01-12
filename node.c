@@ -26,6 +26,8 @@ node* new_binop(state* s, int op, node* lhs, node* rhs) {
 
 void print_binop(node* n, int indent) {
   switch (intn(n->car)) {
+    case OR: printf("||,"); break;
+    case AND: printf("&&,"); break;
     case PLUS: printf("+,"); break;
     case MINUS: printf("-,"); break;
     case TIMES: printf("*,"); break;
@@ -100,6 +102,9 @@ void print_node(node* n, int indent) {
     case NODE_IDENTIFIER:
       printf("identifier %c", *(char*)n->cdr);
       break;
+    default:
+      printf("unknown node %d", intn(n->car));
+      exit(1);
   }
   printf(")");
   if (indent == 0)

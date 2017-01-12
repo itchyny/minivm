@@ -14,6 +14,8 @@ int yywrap(yyscan_t yyscanner)
 %%
 
 "="    return EQ;
+"||"   return OR;
+"&&"   return AND;
 "+"    return PLUS;
 "-"    return MINUS;
 "*"    return TIMES;

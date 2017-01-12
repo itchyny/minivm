@@ -153,24 +153,38 @@ static uint16_t codegen(env* e, node* n) {
       break;
     }
     case NODE_PRINT:
-      count += codegen(e, n->cdr) + 1;
-      addcode(e, OP_PRINT);
+      count += codegen(e, n->cdr);
+      addcode(e, OP_PRINT); ++count;
       break;
     case NODE_BINOP:
       count += codegen(e, n->cdr->cdr->car);
-      count += codegen(e, n->cdr->cdr->cdr);
-      switch (intn(n->cdr->car)) {
-        case PLUS: addcode(e, OP_ADD); break;
-        case MINUS: addcode(e, OP_MINUS); break;
-        case TIMES: addcode(e, OP_TIMES); break;
-        case DIVIDE: addcode(e, OP_DIVIDE); break;
-        case GT: addcode(e, OP_GT); break;
-        case GE: addcode(e, OP_GE); break;
-        case EQEQ: addcode(e, OP_EQEQ); break;
-        case LT: addcode(e, OP_LT); break;
-        case LE: addcode(e, OP_LE); break;
+      if (intn(n->cdr->car) == AND) {
+        uint16_t diff, index;
+        index = addcode(e, 0); ++count;
+        addcode(e, OP_POP); ++count;
+        count += (diff = codegen(e, n->cdr->cdr->cdr));
+        setcode(e, index, MK_OP_A(OP_JMP_NOT_KEEP, diff + 1));
+      } else if (intn(n->cdr->car) == OR) {
+        uint16_t diff, index;
+        index = addcode(e, 0); ++count;
+        addcode(e, OP_POP); ++count;
+        count += (diff = codegen(e, n->cdr->cdr->cdr));
+        setcode(e, index, MK_OP_A(OP_JMP_IF_KEEP, diff + 1));
+      } else {
+        count += codegen(e, n->cdr->cdr->cdr);
+        switch (intn(n->cdr->car)) {
+          case PLUS: addcode(e, OP_ADD); break;
+          case MINUS: addcode(e, OP_MINUS); break;
+          case TIMES: addcode(e, OP_TIMES); break;
+          case DIVIDE: addcode(e, OP_DIVIDE); break;
+          case GT: addcode(e, OP_GT); break;
+          case GE: addcode(e, OP_GE); break;
+          case EQEQ: addcode(e, OP_EQEQ); break;
+          case LT: addcode(e, OP_LT); break;
+          case LE: addcode(e, OP_LE); break;
+        }
+        ++count;
       }
-      ++count;
       break;
     case NODE_BOOL: {
       constant_value v;
@@ -244,21 +258,39 @@ inline static bool evaluate_bool(env* e) {
 static void execute_codes(env* e) {
   int i; value v;
   e->stack = calloc(1024, sizeof(value));
-  for (i = 0; i < e->codesidx; i++) {
+  for (i = 0; i < e->codesidx; ++i) {
+    /* printf("%d %d %d\n", i, e->stackidx, GET_OPCODE(e->codes[i])); */
     switch (GET_OPCODE(e->codes[i])) {
+      case OP_POP:
+        --e->stackidx;
+        break;
       case OP_ASSIGN:
         e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
       case OP_JMP:
         i += GET_ARG_A(e->codes[i]);
         break;
+      case OP_JMP_IF:
+        if (evaluate_bool(e))
+          i += GET_ARG_A(e->codes[i]);
+        break;
       case OP_JMP_IF_BACK:
         if (evaluate_bool(e))
           i -= GET_ARG_A(e->codes[i]);
         break;
+      case OP_JMP_IF_KEEP:
+        if (evaluate_bool(e))
+          i += GET_ARG_A(e->codes[i]);
+        ++e->stackidx;
+        break;
       case OP_JMP_NOT:
         if (!evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
+        break;
+      case OP_JMP_NOT_KEEP:
+        if (!evaluate_bool(e))
+          i += GET_ARG_A(e->codes[i]);
+        ++e->stackidx;
         break;
       case OP_ADD: BINARY_OP(+); break;
       case OP_MINUS: BINARY_OP(-); break;
@@ -297,7 +329,12 @@ static void execute_codes(env* e) {
       case OP_LOAD_IDENT:
         e->stack[e->stackidx++] = e->variables[GET_ARG_A(e->codes[i])].value;
         break;
+      default: printf("unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
     }
+  }
+  if (e->stackidx != 0) {
+    printf("stack not consumed\n");
+    exit(1);
   }
 }
 
@@ -305,14 +342,23 @@ static void print_codes(env* e) {
   int i;
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
+      case OP_POP: printf("pop\n"); break;
       case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_BACK: printf("jmp_if_back %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;
       case OP_DIVIDE: printf("/\n"); break;
+      case OP_GT: printf(">\n"); break;
+      case OP_GE: printf(">=\n"); break;
+      case OP_EQEQ: printf("==\n"); break;
+      case OP_LT: printf("<\n"); break;
+      case OP_LE: printf("<=\n"); break;
       case OP_PRINT: printf("print\n"); break;
       case OP_LOAD_BOOL:
         if (e->constants[GET_ARG_A(e->codes[i])].bval)
@@ -323,6 +369,7 @@ static void print_codes(env* e) {
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %.9lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
       case OP_LOAD_IDENT: printf("load %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
+      default: printf("unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
     }
   }
 }
