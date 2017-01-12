@@ -109,10 +109,10 @@ static int lookup(env* e, char* name, char set) {
   return -1;
 }
 
-#define GET_OPCODE(i)       ((int)(((uint32_t)(i)) & 0xff))
-#define GET_ARG_A(i)        ((int)((((uint32_t)(i)) >> 8) & 0xffffff))
+#define GET_OPCODE(i)       ((uint8_t)(i & 0xff))
+#define GET_ARG_A(i)        ((int16_t)((i >> 8) & 0xffff))
 
-#define MK_ARG_A(a)         ((intptr_t)((a) & 0xffffff) << 8)
+#define MK_ARG_A(a)         ((intptr_t)((a) & 0xffff) << 8)
 #define MK_OP_A(op,a)       (op|MK_ARG_A(a))
 
 static uint16_t codegen(env* e, node* n) {
@@ -130,7 +130,7 @@ static uint16_t codegen(env* e, node* n) {
       addcode(e, MK_OP_A(OP_ASSIGN, lookup(e, (char*)n->cdr->car, 1)));
       break;
     case NODE_IF: {
-      uint16_t diff0, diff1, index0, index1;
+      int16_t diff0, diff1; uint16_t index0, index1;
       count += codegen(e, n->cdr->car);
       index0 = addcode(e, 0); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr->car));
@@ -144,12 +144,12 @@ static uint16_t codegen(env* e, node* n) {
       break;
     }
     case NODE_WHILE: {
-      uint16_t diff0, diff1, index;
+      int16_t diff0, diff1; uint16_t index;
       index = addcode(e, 0); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr));
       setcode(e, index, MK_OP_A(OP_JMP, diff0));
       count += (diff1 = codegen(e, n->cdr->car));
-      addcode(e, MK_OP_A(OP_JMP_IF_BACK, diff0 + diff1 + 1)); ++count;
+      addcode(e, MK_OP_A(OP_JMP_IF, -diff0 - diff1 - 1)); ++count;
       break;
     }
     case NODE_PRINT:
@@ -159,13 +159,13 @@ static uint16_t codegen(env* e, node* n) {
     case NODE_BINOP:
       count += codegen(e, n->cdr->cdr->car);
       if (intn(n->cdr->car) == AND) {
-        uint16_t diff, index;
+        int16_t diff; uint16_t index;
         index = addcode(e, 0); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
         setcode(e, index, MK_OP_A(OP_JMP_NOT_KEEP, diff + 1));
       } else if (intn(n->cdr->car) == OR) {
-        uint16_t diff, index;
+        int16_t diff; uint16_t index;
         index = addcode(e, 0); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
@@ -274,10 +274,6 @@ static void execute_codes(env* e) {
         if (evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
         break;
-      case OP_JMP_IF_BACK:
-        if (evaluate_bool(e))
-          i -= GET_ARG_A(e->codes[i]);
-        break;
       case OP_JMP_IF_KEEP:
         if (evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
@@ -346,7 +342,6 @@ static void print_codes(env* e) {
       case OP_ASSIGN: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_JMP_IF_BACK: printf("jmp_if_back %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
