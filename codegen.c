@@ -164,6 +164,11 @@ static uint16_t codegen(env* e, node* n) {
         case MINUS: addcode(e, OP_MINUS); break;
         case TIMES: addcode(e, OP_TIMES); break;
         case DIVIDE: addcode(e, OP_DIVIDE); break;
+        case GT: addcode(e, OP_GT); break;
+        case GE: addcode(e, OP_GE); break;
+        case EQEQ: addcode(e, OP_EQEQ); break;
+        case LT: addcode(e, OP_LT); break;
+        case LE: addcode(e, OP_LE); break;
       }
       ++count;
       break;
@@ -259,6 +264,11 @@ static void execute_codes(env* e) {
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
       case OP_DIVIDE: BINARY_OP(/); break;
+      case OP_GT: BINARY_OP(>); break;
+      case OP_GE: BINARY_OP(>=); break;
+      case OP_EQEQ: BINARY_OP(==); break;
+      case OP_LT: BINARY_OP(<); break;
+      case OP_LE: BINARY_OP(<=); break;
       case OP_PRINT:
         v = e->stack[--e->stackidx];
         switch (v.type) {

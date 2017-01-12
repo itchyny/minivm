@@ -18,10 +18,13 @@ int yyerror(state*, char const*);
   node *node;
 }
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
-%token EQ PLUS MINUS TIMES DIVIDE LPAREN RPAREN PRINT CR
+%token EQ PLUS MINUS TIMES DIVIDE GT GE EQEQ LT LE
+%token LPAREN RPAREN PRINT CR
 %token IF ELSEIF ELSE ENDIF WHILE ENDWHILE
 %type <node> program statements statement else_opt expression primary
 
+%nonassoc EQEQ
+%left GT GE LT LE
 %left PLUS MINUS
 %left TIMES DIVIDE
 
@@ -98,6 +101,26 @@ expression        : expression PLUS expression
                   | expression DIVIDE expression
                     {
                       $$ = binop(DIVIDE, $1, $3);
+                    }
+                  | expression GT expression
+                    {
+                      $$ = binop(GT, $1, $3);
+                    }
+                  | expression GE expression
+                    {
+                      $$ = binop(GE, $1, $3);
+                    }
+                  | expression EQEQ expression
+                    {
+                      $$ = binop(EQEQ, $1, $3);
+                    }
+                  | expression LT expression
+                    {
+                      $$ = binop(LT, $1, $3);
+                    }
+                  | expression LE expression
+                    {
+                      $$ = binop(LE, $1, $3);
                     }
                   | LPAREN expression RPAREN
                     {

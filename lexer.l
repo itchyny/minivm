@@ -18,6 +18,11 @@ int yywrap(yyscan_t yyscanner)
 "-"    return MINUS;
 "*"    return TIMES;
 "/"    return DIVIDE;
+">"    return GT;
+">="   return GE;
+"=="   return EQEQ;
+"<"    return LT;
+"<="   return LE;
 "("    return LPAREN;
 ")"    return RPAREN;
 "print"    return PRINT;
