@@ -182,6 +182,7 @@ static uint16_t codegen(env* e, node* n) {
           case EQEQ: addcode(e, OP_EQEQ); break;
           case LT: addcode(e, OP_LT); break;
           case LE: addcode(e, OP_LE); break;
+          default: printf("unknown binary operator\n"); exit(1);
         }
         ++count;
       }
