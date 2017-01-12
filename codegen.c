@@ -202,54 +202,27 @@ static uint16_t codegen(env* e, node* n) {
   return count;
 }
 
+#define TO_LONG(val) (\
+  val.type == VT_DOUBLE ? (long)val.dval : \
+  val.type == VT_LONG ? val.lval : \
+  val.type == VT_BOOL ? (val.bval ? 1 : 0) : 0)
+
+#define TO_DOUBLE(val) (\
+  val.type == VT_DOUBLE ? val.dval : \
+  val.type == VT_LONG ? (double)val.lval : \
+  val.type == VT_BOOL ? (val.bval ? 1.0 : 0.0) : 0.0)
+
 #define BINARY_OP(op) \
   do { \
     value rhs = e->stack[--e->stackidx]; \
     value lhs = e->stack[--e->stackidx]; \
-    switch (lhs.type) { \
-      case VT_BOOL: \
-        switch (rhs.type) { \
-          case VT_BOOL: \
-            e->stack[e->stackidx].type = VT_LONG; \
-            e->stack[e->stackidx++].lval = (lhs.lval ? 1 : 0) op (rhs.bval ? 1 : 0); \
-            break; \
-          case VT_LONG: \
-            e->stack[e->stackidx].type = VT_LONG; \
-            e->stack[e->stackidx++].lval = (lhs.lval ? 1 : 0) op rhs.lval; \
-            break; \
-          case VT_DOUBLE: \
-            e->stack[e->stackidx].type = VT_DOUBLE; \
-            e->stack[e->stackidx++].dval = (lhs.lval ? 1.0 : 0.0) op rhs.dval; \
-            break; \
-        } \
-        break; \
-      case VT_LONG: \
-        switch (rhs.type) { \
-          case VT_BOOL: \
-            e->stack[e->stackidx++].lval = lhs.lval op (rhs.bval ? 1 : 0); \
-            break; \
-          case VT_LONG: \
-            e->stack[e->stackidx++].lval = lhs.lval op rhs.lval; \
-            break; \
-          case VT_DOUBLE: \
-            e->stack[e->stackidx].type = VT_DOUBLE; \
-            e->stack[e->stackidx++].dval = (double)lhs.lval op rhs.dval; \
-            break; \
-        } \
-        break; \
-      case VT_DOUBLE: \
-        switch (rhs.type) { \
-          case VT_BOOL: \
-            e->stack[e->stackidx++].dval = lhs.lval op (rhs.bval ? 1.0 : 0.0); \
-            break; \
-          case VT_LONG: \
-            e->stack[e->stackidx++].dval = lhs.dval op (double)rhs.lval; \
-            break; \
-          case VT_DOUBLE: \
-            e->stack[e->stackidx++].dval = lhs.dval op rhs.dval; \
-            break; \
-        } \
-        break; \
+    if (lhs.type == VT_DOUBLE || rhs.type == VT_DOUBLE) { \
+      e->stack[e->stackidx].type = VT_DOUBLE; \
+      e->stack[e->stackidx++].dval = TO_DOUBLE(lhs) op TO_DOUBLE(rhs); \
+      \
+    } else { \
+      e->stack[e->stackidx].type = VT_LONG; \
+      e->stack[e->stackidx++].lval = TO_LONG(lhs) op TO_LONG(rhs); \
     } \
   } while(0);
 
