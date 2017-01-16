@@ -84,6 +84,18 @@ void print_node(node* n, int indent) {
       printf("print");
       print_node(n->cdr, indent + 2);
       break;
+    case NODE_FCALL: {
+      node* m;
+      printf("call %s", (char*)n->cdr->car);
+      m = n->cdr->cdr;
+      while (m != NULL) {
+        print_node(m->car, indent + 2);
+        m = m->cdr;
+        if (m != NULL)
+          printf(",");
+      }
+      break;
+   }
     case NODE_BINOP:
       print_binop(n->cdr, indent);
       break;
@@ -100,7 +112,7 @@ void print_node(node* n, int indent) {
       printf("long %ld", atol((char*)n->cdr));
       break;
     case NODE_IDENTIFIER:
-      printf("identifier %c", *(char*)n->cdr);
+      printf("identifier %s", (char*)n->cdr);
       break;
     default:
       printf("unknown node %d", intn(n->car));

@@ -10,6 +10,7 @@ enum OP_CODE {
   OP_JMP_NOT,
   OP_JMP_NOT_KEEP,
   OP_PRINT,
+  OP_FCALL,
   OP_ADD,
   OP_MINUS,
   OP_TIMES,

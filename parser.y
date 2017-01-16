@@ -19,9 +19,9 @@ int yyerror(state*, char const*);
 }
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
 %token EQ PLUS MINUS TIMES DIVIDE GT GE EQEQ LT LE
-%token LPAREN RPAREN PRINT CR
+%token LPAREN RPAREN COMMA PRINT CR
 %token IF ELSEIF ELSE ENDIF WHILE ENDWHILE
-%type <node> program statements statement else_opt expression primary
+%type <node> program statements statement else_opt expression args_opt args primary
 
 %left OR
 %left AND
@@ -88,7 +88,11 @@ else_opt          :
                     }
                   ;
 
-expression        : expression OR expression
+expression        : IDENTIFIER LPAREN args_opt RPAREN
+                    {
+                      $$ = cons(nint(NODE_FCALL), cons($1, $3));
+                    }
+                  | expression OR expression
                     {
                       $$ = binop(OR, $1, $3);
                     }
@@ -139,6 +143,26 @@ expression        : expression OR expression
                   | primary
                     {
                       $$ = $1;
+                    }
+                  ;
+
+args_opt          :
+                    {
+                      $$ = NULL;
+                    }
+                  | args
+                    {
+                      $$ = $1;
+                    }
+                  ;
+
+args              : expression
+                    {
+                      $$ = cons($1, NULL);
+                    }
+                  | args COMMA expression
+                    {
+                      $$ = append($1, cons($3, NULL));
                     }
                   ;
 

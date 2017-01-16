@@ -12,6 +12,7 @@ enum node_type {
   NODE_IF,
   NODE_WHILE,
   NODE_PRINT,
+  NODE_FCALL,
   NODE_BINOP,
   NODE_BOOL,
   NODE_LONG,

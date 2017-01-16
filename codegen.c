@@ -8,6 +8,7 @@ enum value_type {
   VT_BOOL,
   VT_LONG,
   VT_DOUBLE,
+  VT_FUNC,
 };
 
 typedef struct value {
@@ -16,8 +17,19 @@ typedef struct value {
     bool bval;
     long lval;
     double dval;
+    struct func* fval;
   };
 } value;
+
+#define TO_LONG(val) (\
+  val.type == VT_DOUBLE ? (long)val.dval : \
+  val.type == VT_LONG ? val.lval : \
+  val.type == VT_BOOL ? (val.bval ? 1 : 0) : 0)
+
+#define TO_DOUBLE(val) (\
+  val.type == VT_DOUBLE ? val.dval : \
+  val.type == VT_LONG ? (double)val.lval : \
+  val.type == VT_BOOL ? (val.bval ? 1.0 : 0.0) : 0.0)
 
 typedef struct constant_value {
   union {
@@ -44,6 +56,60 @@ typedef struct env {
   variable* variables;
 } env;
 
+typedef struct func {
+  char* name;
+  void (*func)(env*, value*, int);
+} func;
+
+static void f_min(env* e, value* values, int len) {
+  int i; long l; double d, g;
+  value v;
+  v.type = VT_LONG;
+  for (i = 0; i < len; ++i) {
+    if (v.type == VT_LONG) {
+      if (values[i].type == VT_LONG || values[i].type == VT_BOOL) {
+        l = TO_LONG(values[i]);
+        v.lval = i == 0 ? l : l > v.lval ? v.lval : l;
+        continue;
+      }
+      v.type = VT_DOUBLE;
+      d = (double)v.lval;
+    } else {
+      d = v.dval;
+    }
+    g = TO_DOUBLE(values[i]);
+    v.dval = i == 0 ? g : d > g ? g : d;
+  }
+  e->stack[e->stackidx++] = v;
+}
+
+static void f_max(env* e, value* values, int len) {
+  int i; long l; double d, g;
+  value v;
+  v.type = VT_LONG;
+  for (i = 0; i < len; ++i) {
+    if (v.type == VT_LONG) {
+      if (values[i].type == VT_LONG || values[i].type == VT_BOOL) {
+        l = TO_LONG(values[i]);
+        v.lval = i == 0 ? l : l > v.lval ? l : v.lval;
+        continue;
+      }
+      v.type = VT_DOUBLE;
+      d = (double)v.lval;
+    } else {
+      d = v.dval;
+    }
+    g = TO_DOUBLE(values[i]);
+    v.dval = i == 0 ? g : d > g ? d : g;
+  }
+  e->stack[e->stackidx++] = v;
+}
+
+func gfuncs[] = {
+  { "min", f_min },
+  { "max", f_max },
+};
+
 static env* new_env() {
   env* e = (env*)malloc(sizeof(env));
   if (!e)
@@ -69,9 +135,12 @@ static void free_env(env* e) {
 
 #define GET_OPCODE(i)       ((uint8_t)(i & 0xff))
 #define GET_ARG_A(i)        ((int16_t)((i >> 8) & 0xffff))
+#define GET_ARG_B(i)        ((int8_t)((i >> 24) & 0xff))
 
 #define MK_ARG_A(a)         ((intptr_t)((a) & 0xffff) << 8)
+#define MK_ARG_B(a)         ((intptr_t)((a) & 0xff) << 24)
 #define MK_OP_A(op,a)       (op|MK_ARG_A(a))
+#define MK_OP_AB(op,a,b)    (op|MK_ARG_A(a)|MK_ARG_B(b))
 
 static uint16_t addcode(env* e, uint32_t c) {
   if (e->codesidx == e->codeslen) {
@@ -156,6 +225,25 @@ static uint16_t codegen(env* e, node* n) {
       count += codegen(e, n->cdr);
       addcode(e, OP_PRINT); ++count;
       break;
+    case NODE_FCALL: {
+      uint16_t num = 0, i;
+      for (i = 0; i < sizeof(gfuncs) / sizeof(func); ++i) {
+        if (!strcmp(gfuncs[i].name, (char*)n->cdr->car))
+          break;
+      }
+      if (i == sizeof(gfuncs) / sizeof(func)) {
+        printf("Unknown function: %s\n", (char*)n->cdr->car);
+        exit(1);
+      }
+      node* m = n->cdr->cdr;
+      while (m != NULL) {
+        ++num;
+        count += codegen(e, m->car);
+        m = m->cdr;
+      }
+      addcode(e, MK_OP_AB(OP_FCALL, i, num)); ++count;
+      break;
+    }
     case NODE_BINOP:
       count += codegen(e, n->cdr->cdr->car);
       if (intn(n->cdr->car) == AND) {
@@ -222,16 +310,6 @@ static uint16_t codegen(env* e, node* n) {
   return count;
 }
 
-#define TO_LONG(val) (\
-  val.type == VT_DOUBLE ? (long)val.dval : \
-  val.type == VT_LONG ? val.lval : \
-  val.type == VT_BOOL ? (val.bval ? 1 : 0) : 0)
-
-#define TO_DOUBLE(val) (\
-  val.type == VT_DOUBLE ? val.dval : \
-  val.type == VT_LONG ? (double)val.lval : \
-  val.type == VT_BOOL ? (val.bval ? 1.0 : 0.0) : 0.0)
-
 #define BINARY_OP(op) \
   do { \
     value rhs = e->stack[--e->stackidx]; \
@@ -289,15 +367,11 @@ static void execute_codes(env* e) {
           i += GET_ARG_A(e->codes[i]);
         ++e->stackidx;
         break;
-      case OP_ADD: BINARY_OP(+); break;
-      case OP_MINUS: BINARY_OP(-); break;
-      case OP_TIMES: BINARY_OP(*); break;
-      case OP_DIVIDE: BINARY_OP(/); break;
-      case OP_GT: BINARY_OP(>); break;
-      case OP_GE: BINARY_OP(>=); break;
-      case OP_EQEQ: BINARY_OP(==); break;
-      case OP_LT: BINARY_OP(<); break;
-      case OP_LE: BINARY_OP(<=); break;
+      case OP_FCALL: {
+        int len = GET_ARG_B(e->codes[i]);
+        gfuncs[GET_ARG_A(e->codes[i])].func(e, &e->stack[e->stackidx -= len], len);
+        break;
+      }
       case OP_PRINT:
         v = e->stack[--e->stackidx];
         switch (v.type) {
@@ -311,6 +385,15 @@ static void execute_codes(env* e) {
           case VT_DOUBLE: printf("%.9lf\n", v.dval); break;
         }
         break;
+      case OP_ADD: BINARY_OP(+); break;
+      case OP_MINUS: BINARY_OP(-); break;
+      case OP_TIMES: BINARY_OP(*); break;
+      case OP_DIVIDE: BINARY_OP(/); break;
+      case OP_GT: BINARY_OP(>); break;
+      case OP_GE: BINARY_OP(>=); break;
+      case OP_EQEQ: BINARY_OP(==); break;
+      case OP_LT: BINARY_OP(<); break;
+      case OP_LE: BINARY_OP(<=); break;
       case OP_LOAD_BOOL:
         e->stack[e->stackidx].type = VT_BOOL;
         e->stack[e->stackidx++].bval = e->constants[GET_ARG_A(e->codes[i])].bval;
@@ -346,6 +429,8 @@ static void print_codes(env* e) {
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_PRINT: printf("print\n"); break;
+      case OP_FCALL: printf("fcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;
@@ -355,7 +440,6 @@ static void print_codes(env* e) {
       case OP_EQEQ: printf("==\n"); break;
       case OP_LT: printf("<\n"); break;
       case OP_LE: printf("<=\n"); break;
-      case OP_PRINT: printf("print\n"); break;
       case OP_LOAD_BOOL:
         if (e->constants[GET_ARG_A(e->codes[i])].bval)
           printf("bool true\n");

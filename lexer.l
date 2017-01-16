@@ -27,6 +27,7 @@ int yywrap(yyscan_t yyscanner)
 "<="   return LE;
 "("    return LPAREN;
 ")"    return RPAREN;
+","    return COMMA;
 "print"    return PRINT;
 
 \r\n?|\n   return CR;
