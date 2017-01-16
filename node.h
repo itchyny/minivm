@@ -13,6 +13,7 @@ enum node_type {
   NODE_WHILE,
   NODE_PRINT,
   NODE_FCALL,
+  NODE_UNARYOP,
   NODE_BINOP,
   NODE_BOOL,
   NODE_LONG,
@@ -26,6 +27,7 @@ typedef struct node {
 
 node* new_cons();
 node* append(node*, node*);
+node* new_uop();
 node* new_binop();
 void print_node(node*, int);
 

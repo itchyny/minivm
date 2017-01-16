@@ -20,8 +20,21 @@ node* append(node* n, node* m) {
   return n;
 }
 
+node* new_uop(state* s, int op, node* n) {
+  return new_cons(s, nint(NODE_UNARYOP), new_cons(s, nint(op), n));
+}
+
 node* new_binop(state* s, int op, node* lhs, node* rhs) {
   return new_cons(s, nint(NODE_BINOP), new_cons(s, nint(op), new_cons(s, lhs, rhs)));
+}
+
+void print_uop(node* n, int indent) {
+  switch (intn(n->car)) {
+    case MINUS: printf("-,"); break;
+    printf("unknown unary operator %d", intn(n->car));
+    exit(1);
+  }
+  print_node(n->cdr, indent + 2);
 }
 
 void print_binop(node* n, int indent) {
@@ -32,6 +45,8 @@ void print_binop(node* n, int indent) {
     case MINUS: printf("-,"); break;
     case TIMES: printf("*,"); break;
     case DIVIDE: printf("/,"); break;
+    printf("unknown binary operator %d", intn(n->car));
+    exit(1);
   }
   print_node(n->cdr->car, indent + 2);
   printf(",");
@@ -96,6 +111,9 @@ void print_node(node* n, int indent) {
       }
       break;
    }
+    case NODE_UNARYOP:
+      print_uop(n->cdr, indent);
+      break;
     case NODE_BINOP:
       print_binop(n->cdr, indent);
       break;

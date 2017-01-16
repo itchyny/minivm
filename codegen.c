@@ -244,6 +244,15 @@ static uint16_t codegen(env* e, node* n) {
       addcode(e, MK_OP_AB(OP_FCALL, i, num)); ++count;
       break;
     }
+    case NODE_UNARYOP:
+      count += codegen(e, n->cdr->cdr);
+      switch (intn(n->cdr->car)) {
+        case PLUS: addcode(e, OP_UADD); break;
+        case MINUS: addcode(e, OP_UMINUS); break;
+        default: printf("Unknown unary operator\n"); exit(1);
+      };
+      ++count;
+      break;
     case NODE_BINOP:
       count += codegen(e, n->cdr->cdr->car);
       if (intn(n->cdr->car) == AND) {
@@ -270,7 +279,7 @@ static uint16_t codegen(env* e, node* n) {
           case EQEQ: addcode(e, OP_EQEQ); break;
           case LT: addcode(e, OP_LT); break;
           case LE: addcode(e, OP_LE); break;
-          default: printf("unknown binary operator\n"); exit(1);
+          default: printf("Unknown binary operator\n"); exit(1);
         }
         ++count;
       }
@@ -306,9 +315,24 @@ static uint16_t codegen(env* e, node* n) {
       ++count;
       break;
     }
+    default:
+      printf("Unknown node %d\n", intn(n->car));
+      exit(1);
   }
   return count;
 }
+
+#define UNARY_OP(op) \
+  do { \
+    value val = e->stack[--e->stackidx]; \
+    if (val.type == VT_DOUBLE) { \
+      e->stack[e->stackidx++].dval = op(val.dval); \
+      \
+    } else { \
+      e->stack[e->stackidx].type = VT_LONG; \
+      e->stack[e->stackidx++].lval = op(TO_LONG(val)); \
+    } \
+  } while(0);
 
 #define BINARY_OP(op) \
   do { \
@@ -385,6 +409,8 @@ static void execute_codes(env* e) {
           case VT_DOUBLE: printf("%.9lf\n", v.dval); break;
         }
         break;
+      case OP_UADD: UNARY_OP(+); break;
+      case OP_UMINUS: UNARY_OP(-); break;
       case OP_ADD: BINARY_OP(+); break;
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
@@ -409,7 +435,7 @@ static void execute_codes(env* e) {
       case OP_LOAD_IDENT:
         e->stack[e->stackidx++] = e->variables[GET_ARG_A(e->codes[i])].value;
         break;
-      default: printf("unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
+      default: printf("Unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
     }
   }
   if (e->stackidx != 0) {
@@ -431,6 +457,8 @@ static void print_codes(env* e) {
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_PRINT: printf("print\n"); break;
       case OP_FCALL: printf("fcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
+      case OP_UADD: printf("u+\n"); break;
+      case OP_UMINUS: printf("u-\n"); break;
       case OP_ADD: printf("+\n"); break;
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;

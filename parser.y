@@ -7,6 +7,7 @@ int yylex();
 int yyerror(state*, char const*);
 #define YYLEX_PARAM s->scanner
 #define cons(a,b) new_cons(s,(a),(b))
+#define uop(op,a) new_uop(s,(op),(a))
 #define binop(op,a,b) new_binop(s,(op),(a),(b))
 %}
 
@@ -91,6 +92,14 @@ else_opt          :
 expression        : IDENTIFIER LPAREN args_opt RPAREN
                     {
                       $$ = cons(nint(NODE_FCALL), cons($1, $3));
+                    }
+                  | PLUS expression
+                    {
+                      $$ = uop(PLUS, $2);
+                    }
+                  | MINUS expression
+                    {
+                      $$ = uop(MINUS, $2);
                     }
                   | expression OR expression
                     {
