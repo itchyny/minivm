@@ -105,7 +105,24 @@ static void f_max(env* e, value* values, int len) {
   e->stack[e->stackidx++] = v;
 }
 
+static void f_abs(env* e, value* values, int len) {
+  value v;
+  if (len != 1) {
+    printf("Invalid argument for abs()\n");
+    exit(1);
+  }
+  v = values[0];
+  if (v.type == VT_DOUBLE) {
+    e->stack[e->stackidx++].dval = v.dval >= 0.0 ? v.dval : -v.dval;
+  } else {
+    long l = TO_LONG(v);
+    e->stack[e->stackidx].type = VT_LONG;
+    e->stack[e->stackidx++].lval = l >= 0 ? l : -l;
+  }
+}
+
 func gfuncs[] = {
+  { "abs", f_abs },
   { "min", f_min },
   { "max", f_max },
 };
