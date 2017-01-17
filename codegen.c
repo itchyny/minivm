@@ -63,6 +63,10 @@ typedef struct func {
 
 static void f_min(env* e, value* values, int len) {
   int i; long l; double d, g;
+  if (len == 0) {
+    printf("Invalid argument for min()\n");
+    exit(1);
+  }
   value v;
   v.type = VT_LONG;
   for (i = 0; i < len; ++i) {
@@ -86,6 +90,10 @@ static void f_min(env* e, value* values, int len) {
 static void f_max(env* e, value* values, int len) {
   int i; long l; double d, g;
   value v;
+  if (len == 0) {
+    printf("Invalid argument for max()\n");
+    exit(1);
+  }
   v.type = VT_LONG;
   for (i = 0; i < len; ++i) {
     if (v.type == VT_LONG) {
