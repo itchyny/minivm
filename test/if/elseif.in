@@ -10,7 +10,7 @@ elseif true
 else
   d = 13
   print d
-endif
+end
 
 e = 14
 print e
@@ -21,4 +21,4 @@ if false
 elseif true
   b = 11
   print b
-endif
+end

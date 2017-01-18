@@ -4,7 +4,7 @@ while a
   print a * b
   a = a - 1
   b = b + 1
-endwhile
+end
 
 c = 5
 while c
@@ -12,7 +12,7 @@ while c
   while d
     print c * d
     d = d - 1
-  endwhile
+  end
   c = c - 1
-endwhile
+end
 print c

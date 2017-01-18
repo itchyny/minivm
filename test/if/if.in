@@ -1,20 +1,20 @@
 if true
   print 3 * 4
-endif
+end
 
 if false
   print 15
-endif
+end
 
 a = true
 if a
   print 18
-endif
+end
 
 if 1
   print 20
-endif
+end
 
 if 0
   print 30
-endif
+end

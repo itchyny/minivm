@@ -2,26 +2,26 @@ a = true
 b = true
 if a && b
   print 0
-endif
+end
 
 a = true
 b = false
 if a && b
   print 1
-endif
+end
 
 a = false
 b = true
 if a && b
   print 2
-endif
+end
 
 a = false
 b = false
 if a && b || true && true
   print 3
-endif
+end
 
 if (false || true) && (true || false)
   print 4
-endif
+end

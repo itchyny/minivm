@@ -4,7 +4,7 @@ if true
 else
   b = 11
   print b
-endif
+end
 
 c = 12
 print c
@@ -18,5 +18,5 @@ else
   else
     e = 14
     print c * e
-  endif
-endif
+  end
+end
