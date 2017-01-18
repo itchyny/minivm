@@ -3,6 +3,7 @@
 #include "lex.yy.h"
 #include "y.tab.h"
 #include "codegen.c"
+#include "vm.c"
 int yyparse();
 
 int main(int argc, const char* argv[])
