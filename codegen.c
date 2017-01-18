@@ -54,6 +54,7 @@ typedef struct env {
   uint32_t stackidx;
   value* stack;
   variable* variables;
+  uint32_t variableslen;
 } env;
 
 typedef struct func {
@@ -148,6 +149,7 @@ static env* new_env() {
   e->stackidx = 0;
   e->stack = NULL;
   e->variables = calloc(128, sizeof(variable));
+  e->variableslen = 0;
   return e;
 }
 
@@ -204,6 +206,7 @@ static int lookup(env* e, char* name, char set) {
   }
   if (set) {
     e->variables[i].name = name;
+    e->variableslen = i + 1;
     return i;
   }
   return -1;
