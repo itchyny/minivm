@@ -36,9 +36,8 @@ int yywrap(yyscan_t yyscanner)
 "if"       return IF;
 "elseif"   return ELSEIF;
 "else"     return ELSE;
-"endif"    return ENDIF;
 "while"    return WHILE;
-"endwhile" return ENDWHILE;
+"end"      return END;
 
 "true" {
   yylval->node = (node*)(1);
