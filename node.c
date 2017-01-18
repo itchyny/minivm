@@ -64,6 +64,24 @@ void print_node(node* n, int indent) {
   }
   printf("(");
   switch (intn(n->car)) {
+    case NODE_FUNCTION: {
+      node* m = n->cdr->cdr->car;
+      printf("func %s (", (char*)n->cdr->car);
+      while (m != NULL) {
+        printf("%s", (char*)m->car);
+        m = m->cdr;
+        if (m != NULL)
+          printf(", ");
+      }
+      printf(")");
+      print_node(n->cdr->cdr->cdr, indent + 2);
+      break;
+    }
+    case NODE_RETURN:
+      printf("return (");
+      print_node(n->cdr, indent + 2);
+      printf(")");
+      break;
     case NODE_STMTS:
       n = n->cdr;
       while (n != NULL) {
@@ -74,7 +92,7 @@ void print_node(node* n, int indent) {
       }
       break;
     case NODE_ASSIGN:
-      printf("let %c", *(char*)n->cdr->car);
+      printf("let %s", (char*)n->cdr->car);
       print_node(n->cdr->cdr, indent + 2);
       break;
     case NODE_IF:

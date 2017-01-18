@@ -7,6 +7,8 @@
 #define intn(x) ((int)(intptr_t)(x))
 
 enum node_type {
+  NODE_FUNCTION,
+  NODE_RETURN,
   NODE_STMTS,
   NODE_ASSIGN,
   NODE_IF,
