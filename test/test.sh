@@ -1,5 +1,5 @@
 #!/bin/bash
-bin=$(dirname $0)/../svm
+bin=$(dirname $0)/../minivm
 ret=0
 for f in $(dirname $0)/*/*.in; do
   output=$($bin < $f)
