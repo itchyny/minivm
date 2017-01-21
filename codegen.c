@@ -235,33 +235,27 @@ static uint16_t codegen(env* e, node* n) {
       }
       break;
     case NODE_BOOL: {
-      constant_value v;
-      v.bval = (bool)((intptr_t)n->cdr == 1);
-      addcode(e, MK_OP_A(OP_LOAD_BOOL, addconstant(e, v)));
-      ++count;
+      constant_value v; v.bval = (bool)((intptr_t)n->cdr == 1);
+      addcode(e, MK_OP_A(OP_LOAD_BOOL, addconstant(e, v))); ++count;
       break;
     }
     case NODE_LONG: {
-      constant_value v;
-      v.lval = atol((char*)n->cdr);
-      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v)));
-      ++count;
+      constant_value v; v.lval = atol((char*)n->cdr);
+      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
       break;
     }
     case NODE_DOUBLE: {
-      constant_value v;
-      v.dval = strtod((char*)n->cdr, NULL);
-      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, v)));
-      ++count;
+      constant_value v; v.dval = strtod((char*)n->cdr, NULL);
+      addcode(e, MK_OP_A(OP_LOAD_DOUBLE, addconstant(e, v))); ++count;
       break;
     }
     case NODE_IDENTIFIER: {
-      int index = lookup(e, (char*)n->cdr, 0);
-      if (index < 0) {
+      int i = lookup(e, (char*)n->cdr, 0);
+      if (i < 0) {
         printf("Unknown variable: %s\n", (char*)n->cdr);
         exit(1);
       }
-      addcode(e, MK_OP_A(OP_LOAD_IDENT, index)); ++count;
+      addcode(e, MK_OP_A(OP_LOAD_IDENT, i)); ++count;
       break;
     }
     default:
