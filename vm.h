@@ -5,7 +5,6 @@ enum value_type {
   VT_BOOL,
   VT_LONG,
   VT_DOUBLE,
-  VT_FUNC,
 };
 
 typedef struct value {
@@ -14,7 +13,6 @@ typedef struct value {
     bool bval;
     long lval;
     double dval;
-    uint32_t fval;
   };
 } value;
 

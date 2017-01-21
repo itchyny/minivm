@@ -96,11 +96,13 @@ static uint16_t codegen(env* e, node* n) {
   uint16_t count = 0;
   switch (intn(n->car)) {
     case NODE_FUNCTION: {
-      int i = lookup(e, (char*)n->cdr->car, 1);
+      constant_value v; v.lval = e->codesidx + 4;
+      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
+      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1))); ++count;
       variable* save_variables = e->variables; e->variables = calloc(128, sizeof(variable));
       uint32_t save_variableslen = e->variableslen; e->variableslen = 0;
       uint16_t save_func_pc = e->func_pc; e->func_pc = e->codesidx;
-      uint16_t index1, index2, index3, index4, pc = e->codesidx;
+      uint16_t index1, index2, index3, index4;
       index1 = addcode(e, OP_JMP); ++count;
       index2 = addcode(e, OP_UNALLOC); ++count;
       addcode(e, OP_UNSAVEPC); ++count;
@@ -108,11 +110,9 @@ static uint16_t codegen(env* e, node* n) {
       index4 = addcode(e, OP_LET); ++count;
       count += let_args(e, n->cdr->cdr->car);
       count += codegen(e, n->cdr->cdr->cdr);
-      if (e->codes[e->codesidx - 1] != MK_OP_A(OP_JMP, - (long)(e->codesidx - 1 - e->func_pc))) {
-        constant_value v; v.lval = 0;
-        addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
-        addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->func_pc))); ++count;
-      }
+      v.lval = 0;
+      addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
+      addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->func_pc))); ++count;
       operand(e, index1, e->codesidx - e->func_pc - 1);
       operand(e, index2, e->variableslen + 1);
       operand(e, index3, e->variableslen + 1);
@@ -121,7 +121,6 @@ static uint16_t codegen(env* e, node* n) {
       e->variables = save_variables;
       e->variableslen = save_variableslen;
       e->func_pc = save_func_pc;
-      e->variables[i].value.type = VT_FUNC; e->variables[i].value.fval = pc + 2;
       break;
     }
     case NODE_RETURN:
@@ -136,8 +135,8 @@ static uint16_t codegen(env* e, node* n) {
       }
       break;
     case NODE_ASSIGN:
-      count += codegen(e, n->cdr->cdr) + 1;
-      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1)));
+      count += codegen(e, n->cdr->cdr);
+      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1))); ++count;
       break;
     case NODE_IF: {
       int16_t diff0, diff1; uint16_t index0, index1;

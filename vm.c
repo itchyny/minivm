@@ -61,7 +61,7 @@ static void execute_codes(env* e) {
         break;
       }
       case OP_UFCALL:
-        i = e->variables[offset - GET_ARG_A(e->codes[i])].value.fval;
+        i = e->variables[offset - GET_ARG_A(e->codes[i])].value.lval;
         break;
       case OP_PRINT:
         v = e->stack[--e->stackidx];
