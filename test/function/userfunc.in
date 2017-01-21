@@ -1,0 +1,22 @@
+func bar(x)
+  if x > 10
+    return 30
+  elseif x <= 0
+    return -1
+  end
+end
+
+print bar(-100)
+print bar(5)
+print bar(100)
+
+func foo(argx, argy)
+  print argx
+  print argy
+  print argx * argy
+  hoge = 3 * argx + 4 * argy
+  return 5 * hoge + (argy - argx)
+end
+
+print foo(foo(10, 20), 30)
+print foo(foo(100, 200) - 300, 400)
