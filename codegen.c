@@ -197,6 +197,7 @@ static uint16_t codegen(env* e, node* n) {
     case NODE_UNARYOP:
       count += codegen(e, n->cdr->cdr);
       switch (intn(n->cdr->car)) {
+        case NOT: addcode(e, OP_UNOT); break;
         case PLUS: addcode(e, OP_UADD); break;
         case MINUS: addcode(e, OP_UMINUS); break;
         default: printf("Unknown unary operator\n"); exit(1);
@@ -308,6 +309,7 @@ static void print_codes(env* e) {
       case OP_PRINT: printf("print\n"); break;
       case OP_FCALL: printf("fcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_UFCALL: printf("ufcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
+      case OP_UNOT: printf("u!\n"); break;
       case OP_UADD: printf("u+\n"); break;
       case OP_UMINUS: printf("u-\n"); break;
       case OP_ADD: printf("+\n"); break;

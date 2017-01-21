@@ -30,6 +30,7 @@ int yyerror(state*, char const*);
 %left GT GE LT LE
 %left PLUS MINUS
 %left TIMES DIVIDE
+%right NOT
 
 %%
 
@@ -100,6 +101,10 @@ else_opt          :
 expression        : IDENTIFIER LPAREN args_opt RPAREN
                     {
                       $$ = cons(nint(NODE_FCALL), cons($1, $3));
+                    }
+                  | NOT expression
+                    {
+                      $$ = uop(NOT, $2);
                     }
                   | PLUS expression
                     {

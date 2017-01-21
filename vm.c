@@ -76,6 +76,12 @@ static void execute_codes(env* e) {
           case VT_DOUBLE: printf("%.9lf\n", v.dval); break;
         }
         break;
+      case OP_UNOT: {
+        bool b = !TO_BOOL(e->stack[e->stackidx - 1]);
+        e->stack[e->stackidx - 1].type = VT_BOOL;
+        e->stack[e->stackidx - 1].bval = b;
+        break;
+      }
       case OP_UADD: UNARY_OP(+); break;
       case OP_UMINUS: UNARY_OP(-); break;
       case OP_ADD: BINARY_OP(+); break;

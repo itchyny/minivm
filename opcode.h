@@ -15,6 +15,7 @@ enum OP_CODE {
   OP_PRINT,
   OP_FCALL,
   OP_UFCALL,
+  OP_UNOT,
   OP_UADD,
   OP_UMINUS,
   OP_ADD,

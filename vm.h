@@ -18,6 +18,11 @@ typedef struct value {
   };
 } value;
 
+#define TO_BOOL(val) (\
+  val.type == VT_DOUBLE ? val.dval != 0.0 : \
+  val.type == VT_LONG ? val.lval != 0 : \
+  val.type == VT_BOOL ? val.bval : 0)
+
 #define TO_LONG(val) (\
   val.type == VT_DOUBLE ? (long)val.dval : \
   val.type == VT_LONG ? val.lval : \
