@@ -68,26 +68,36 @@ static uint16_t addconstant(env* e, constant_value v) {
   return e->constantsidx++;
 }
 
-static int lookup(env* e, char* name, char set) {
-  int i = 0;
-  while (e->variables[i].name) {
-    if (strcmp(e->variables[i].name, name) == 0)
-      return i;
-    ++i;
+typedef struct variable_index {
+  bool global;
+  int index;
+} variable_index;
+
+static variable_index lookup(env* e, char* name, bool set) {
+  variable_index vi;
+  vi.global = true;
+  vi.index = 0;
+  while (e->variables[vi.index].name) {
+    if (strcmp(e->variables[vi.index].name, name) == 0)
+      return vi;
+    ++vi.index;
   }
   if (set) {
-    e->variables[i].name = name;
-    e->variableslen = i + 1;
-    return i;
+    e->variables[vi.index].name = name;
+    e->variableslen = vi.index + 1;
+    return vi;
   }
-  return -1;
+  vi.index = -1;
+  return vi;
 }
 
 static uint16_t let_args(env* e, node* fargs) {
   uint16_t count = 0;
+  variable_index vi;
   if (fargs != NULL) {
     count += let_args(e, fargs->cdr);
-    addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)fargs->car, 1))); ++count;
+    vi = lookup(e, (char*)fargs->car, true);
+    addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
   }
   return count;
 }
@@ -97,8 +107,9 @@ static uint16_t codegen(env* e, node* n) {
   switch (intn(n->car)) {
     case NODE_FUNCTION: {
       constant_value v; v.lval = e->codesidx + 4;
+      variable_index vi = lookup(e, (char*)n->cdr->car, true);
       addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
-      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1))); ++count;
+      addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
       variable* save_variables = e->variables; e->variables = calloc(128, sizeof(variable));
       uint32_t save_variableslen = e->variableslen; e->variableslen = 0;
       uint16_t save_func_pc = e->func_pc; e->func_pc = e->codesidx;
@@ -134,10 +145,13 @@ static uint16_t codegen(env* e, node* n) {
         n = n->cdr;
       }
       break;
-    case NODE_ASSIGN:
+    case NODE_ASSIGN: {
+      variable_index vi;
+      vi = lookup(e, (char*)n->cdr->car, true);
       count += codegen(e, n->cdr->cdr);
-      addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)n->cdr->car, 1))); ++count;
+      addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
       break;
+    }
     case NODE_IF: {
       int16_t diff0, diff1; uint16_t index0, index1;
       count += codegen(e, n->cdr->car);
@@ -166,10 +180,12 @@ static uint16_t codegen(env* e, node* n) {
       addcode(e, OP_PRINT); ++count;
       break;
     case NODE_FCALL: {
-      uint16_t num = 0, op;
-      int i = lookup(e, (char*)n->cdr->car, 0);
-      if (i >= 0) {
+      uint16_t num = 0, op, i;
+      variable_index vi;
+      vi = lookup(e, (char*)n->cdr->car, false);
+      if (vi.index >= 0) {
         op = OP_UFCALL;
+        i = vi.index;
       } else {
         op = OP_FCALL;
         for (i = 0; i < sizeof(gfuncs) / sizeof(func); ++i) {
@@ -250,12 +266,13 @@ static uint16_t codegen(env* e, node* n) {
       break;
     }
     case NODE_IDENTIFIER: {
-      int i = lookup(e, (char*)n->cdr, 0);
-      if (i < 0) {
+      variable_index vi;
+      vi = lookup(e, (char*)n->cdr, false);
+      if (vi.index < 0) {
         printf("Unknown variable: %s\n", (char*)n->cdr);
         exit(1);
       }
-      addcode(e, MK_OP_A(OP_LOAD_IDENT, i)); ++count;
+      addcode(e, MK_OP_A(OP_LOAD_IDENT, vi.index)); ++count;
       break;
     }
     default:
