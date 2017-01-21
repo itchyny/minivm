@@ -155,11 +155,11 @@ static uint16_t codegen(env* e, node* n) {
     }
     case NODE_WHILE: {
       int16_t diff0, diff1; uint16_t index;
-      index = addcode(e, OP_JMP); ++count;
-      count += (diff0 = codegen(e, n->cdr->cdr));
-      operand(e, index, diff0);
-      count += (diff1 = codegen(e, n->cdr->car));
-      addcode(e, MK_OP_A(OP_JMP_IF, -diff0 - diff1 - 1)); ++count;
+      count += (diff0 = codegen(e, n->cdr->car));
+      index = addcode(e, OP_JMP_NOT); ++count;
+      count += (diff1 = codegen(e, n->cdr->cdr));
+      addcode(e, MK_OP_A(OP_JMP, -(diff0 + diff1 + 2))); ++count;
+      operand(e, index, diff1 + 1);
       break;
     }
     case NODE_PRINT:
