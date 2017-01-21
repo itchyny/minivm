@@ -151,7 +151,7 @@ void print_node(node* n, int indent) {
       printf("identifier %s", (char*)n->cdr);
       break;
     default:
-      printf("unknown node %d", intn(n->car));
+      printf("Unknown node %d", intn(n->car));
       exit(1);
   }
   printf(")");

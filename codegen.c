@@ -20,6 +20,7 @@ static env* new_env() {
   e->stack = NULL;
   e->variables = calloc(128, sizeof(variable));
   e->variableslen = 0;
+  e->func_pc = 0;
   return e;
 }
 
@@ -82,9 +83,51 @@ static int lookup(env* e, char* name, char set) {
   return -1;
 }
 
+static uint16_t let_args(env* e, node* fargs) {
+  uint16_t count = 0;
+  if (fargs != NULL) {
+    count += let_args(e, fargs->cdr);
+    addcode(e, MK_OP_A(OP_LET, lookup(e, (char*)fargs->car, 1))); ++count;
+  }
+  return count;
+}
+
 static uint16_t codegen(env* e, node* n) {
   uint16_t count = 0;
   switch (intn(n->car)) {
+    case NODE_FUNCTION: {
+      int i = lookup(e, (char*)n->cdr->car, 1);
+      variable* save_variables = e->variables; e->variables = calloc(128, sizeof(variable));
+      uint32_t save_variableslen = e->variableslen; e->variableslen = 0;
+      uint16_t save_func_pc = e->func_pc; e->func_pc = e->codesidx;
+      uint16_t index1, index2, index3, index4, pc = e->codesidx;
+      index1 = addcode(e, OP_JMP); ++count;
+      index2 = addcode(e, OP_UNALLOC); ++count;
+      addcode(e, OP_UNSAVEPC); ++count;
+      index3 = addcode(e, OP_ALLOC); ++count;
+      index4 = addcode(e, OP_LET); ++count;
+      count += let_args(e, n->cdr->cdr->car);
+      count += codegen(e, n->cdr->cdr->cdr);
+      if (e->codes[e->codesidx - 1] != MK_OP_A(OP_JMP, - (long)(e->codesidx - 1 - e->func_pc))) {
+        constant_value v; v.lval = 0;
+        addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
+        addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->func_pc))); ++count;
+      }
+      operand(e, index1, e->codesidx - e->func_pc - 1);
+      operand(e, index2, e->variableslen + 1);
+      operand(e, index3, e->variableslen + 1);
+      operand(e, index4, e->variableslen);
+      free(e->variables);
+      e->variables = save_variables;
+      e->variableslen = save_variableslen;
+      e->func_pc = save_func_pc;
+      e->variables[i].value.type = VT_FUNC; e->variables[i].value.fval = pc + 2;
+      break;
+    }
+    case NODE_RETURN:
+      count += codegen(e, n->cdr);
+      addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->func_pc))); ++count;
+      break;
     case NODE_STMTS:
       n = n->cdr;
       while (n != NULL) {
@@ -124,14 +167,20 @@ static uint16_t codegen(env* e, node* n) {
       addcode(e, OP_PRINT); ++count;
       break;
     case NODE_FCALL: {
-      uint16_t num = 0, i;
-      for (i = 0; i < sizeof(gfuncs) / sizeof(func); ++i) {
-        if (!strcmp(gfuncs[i].name, (char*)n->cdr->car))
-          break;
-      }
-      if (i == sizeof(gfuncs) / sizeof(func)) {
-        printf("Unknown function: %s\n", (char*)n->cdr->car);
-        exit(1);
+      uint16_t num = 0, op;
+      int i = lookup(e, (char*)n->cdr->car, 0);
+      if (i >= 0) {
+        op = OP_UFCALL;
+      } else {
+        op = OP_FCALL;
+        for (i = 0; i < sizeof(gfuncs) / sizeof(func); ++i) {
+          if (!strcmp(gfuncs[i].name, (char*)n->cdr->car))
+            break;
+        }
+        if (i == sizeof(gfuncs) / sizeof(func)) {
+          printf("Unknown function: %s\n", (char*)n->cdr->car);
+          exit(1);
+        }
       }
       node* m = n->cdr->cdr;
       while (m != NULL) {
@@ -139,7 +188,10 @@ static uint16_t codegen(env* e, node* n) {
         count += codegen(e, m->car);
         m = m->cdr;
       }
-      addcode(e, MK_OP_AB(OP_FCALL, i, num)); ++count;
+      if (op == OP_UFCALL) {
+        addcode(e, OP_SAVEPC); ++count;
+      }
+      addcode(e, MK_OP_AB(op, i, num)); ++count;
       break;
     }
     case NODE_UNARYOP:
@@ -209,8 +261,7 @@ static uint16_t codegen(env* e, node* n) {
         printf("Unknown variable: %s\n", (char*)n->cdr);
         exit(1);
       }
-      addcode(e, MK_OP_A(OP_LOAD_IDENT, index));
-      ++count;
+      addcode(e, MK_OP_A(OP_LOAD_IDENT, index)); ++count;
       break;
     }
     default:
@@ -251,14 +302,19 @@ static void print_codes(env* e) {
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_POP: printf("pop\n"); break;
-      case OP_LET: printf("let %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
+      case OP_LET: printf("let %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_SAVEPC: printf("savepc\n"); break;
+      case OP_UNSAVEPC: printf("unsavepc\n"); break;
+      case OP_ALLOC: printf("alloc %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_UNALLOC: printf("unalloc %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_PRINT: printf("print\n"); break;
       case OP_FCALL: printf("fcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
+      case OP_UFCALL: printf("ufcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_UADD: printf("u+\n"); break;
       case OP_UMINUS: printf("u-\n"); break;
       case OP_ADD: printf("+\n"); break;
@@ -278,8 +334,8 @@ static void print_codes(env* e) {
         break;
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %.9lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
-      case OP_LOAD_IDENT: printf("load %s\n", e->variables[GET_ARG_A(e->codes[i])].name); break;
-      default: printf("unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
+      case OP_LOAD_IDENT: printf("load %d\n", GET_ARG_A(e->codes[i])); break;
+      default: printf("Unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
     }
   }
 }

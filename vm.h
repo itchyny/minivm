@@ -14,7 +14,7 @@ typedef struct value {
     bool bval;
     long lval;
     double dval;
-    struct func* fval;
+    uint32_t fval;
   };
 } value;
 
@@ -52,6 +52,7 @@ typedef struct env {
   value* stack;
   variable* variables;
   uint32_t variableslen;
+  uint16_t func_pc;
 } env;
 
 typedef struct func {
