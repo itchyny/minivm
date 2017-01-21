@@ -5,7 +5,6 @@ enum OP_CODE {
   OP_POP,
   OP_LET,
   OP_JMP,
-  OP_JMP_IF,
   OP_JMP_IF_KEEP,
   OP_JMP_NOT,
   OP_JMP_NOT_KEEP,

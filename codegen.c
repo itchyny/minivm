@@ -304,7 +304,6 @@ static void print_codes(env* e) {
       case OP_POP: printf("pop\n"); break;
       case OP_LET: printf("let %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;

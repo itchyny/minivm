@@ -29,10 +29,6 @@ static void execute_codes(env* e) {
       case OP_JMP:
         i += GET_ARG_A(e->codes[i]);
         break;
-      case OP_JMP_IF:
-        if (evaluate_bool(e))
-          i += GET_ARG_A(e->codes[i]);
-        break;
       case OP_JMP_IF_KEEP:
         if (evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
