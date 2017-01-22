@@ -30,26 +30,35 @@ node* new_binop(state* s, int op, node* lhs, node* rhs) {
 
 void print_uop(node* n, int indent) {
   switch (intn(n->car)) {
-    case MINUS: printf("-,"); break;
-    printf("unknown unary operator %d", intn(n->car));
-    exit(1);
+    case NOT: printf("(!)"); break;
+    case PLUS: printf("(+)"); break;
+    case MINUS: printf("(-)"); break;
+    default:
+      printf("unknown unary operator %d", intn(n->car));
+      exit(1);
   }
   print_node(n->cdr, indent + 2);
 }
 
 void print_binop(node* n, int indent) {
   switch (intn(n->car)) {
-    case OR: printf("||,"); break;
-    case AND: printf("&&,"); break;
-    case PLUS: printf("+,"); break;
-    case MINUS: printf("-,"); break;
-    case TIMES: printf("*,"); break;
-    case DIVIDE: printf("/,"); break;
-    printf("unknown binary operator %d", intn(n->car));
-    exit(1);
+    case OR: printf("(||)"); break;
+    case AND: printf("(&&)"); break;
+    case PLUS: printf("(+)"); break;
+    case MINUS: printf("(-)"); break;
+    case TIMES: printf("(*)"); break;
+    case DIVIDE: printf("(/)"); break;
+    case GT: printf("(>)"); break;
+    case GE: printf("(>=)"); break;
+    case EQEQ: printf("(==)"); break;
+    case NEQ: printf("(!=)"); break;
+    case LT: printf("(<)"); break;
+    case LE: printf("(<=)"); break;
+    default:
+      printf("unknown binary operator %d", intn(n->car));
+      exit(1);
   }
   print_node(n->cdr->car, indent + 2);
-  printf(",");
   print_node(n->cdr->cdr, indent + 2);
 }
 
@@ -87,8 +96,6 @@ void print_node(node* n, int indent) {
       while (n != NULL) {
         print_node(n->car, indent + 2);
         n = n->cdr;
-        if (n != NULL)
-          printf(",");
       }
       break;
     case NODE_ASSIGN:
@@ -130,8 +137,6 @@ void print_node(node* n, int indent) {
       while (m != NULL) {
         print_node(m->car, indent + 2);
         m = m->cdr;
-        if (m != NULL)
-          printf(",");
       }
       break;
    }
