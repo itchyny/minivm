@@ -258,6 +258,8 @@ static uint16_t codegen(env* e, node* n) {
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
         operand(e, index, diff + 1);
+      } else if ((intn(n->cdr->car) == PLUS || intn(n->cdr->car) == MINUS) && intn(n->cdr->cdr->cdr->car) == NODE_LONG) {
+        addcode(e, MK_OP_A(intn(n->cdr->car) == PLUS ? OP_IADD : OP_IMINUS, atol((char*)(n->cdr->cdr->cdr->cdr)))); ++count;
       } else {
         count += codegen(e, n->cdr->cdr->cdr);
         switch (intn(n->cdr->car)) {
@@ -334,6 +336,19 @@ static uint16_t codegen(env* e, node* n) {
     } \
   } while(0);
 
+#define IBINARY_OP(op) \
+  do { \
+    value v = e->stack[--e->stackidx]; \
+    if (v.type == VT_DOUBLE) { \
+      e->stack[e->stackidx++].dval = v.dval op GET_ARG_A(e->codes[i]); \
+      \
+    } else { \
+      if (v.type != VT_LONG) \
+        e->stack[e->stackidx].type = VT_LONG; \
+      e->stack[e->stackidx++].lval = TO_LONG(v) op GET_ARG_A(e->codes[i]); \
+    } \
+  } while(0);
+
 #define LOGICAL_BINARY_OP(op) \
   do { \
     value rhs = e->stack[--e->stackidx]; \
@@ -370,6 +385,8 @@ static void print_codes(env* e) {
       case OP_MINUS: printf("-\n"); break;
       case OP_TIMES: printf("*\n"); break;
       case OP_DIVIDE: printf("/\n"); break;
+      case OP_IADD: printf("iadd %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_IMINUS: printf("iminus %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_GT: printf(">\n"); break;
       case OP_GE: printf(">=\n"); break;
       case OP_EQEQ: printf("==\n"); break;

@@ -21,6 +21,8 @@ enum OP_CODE {
   OP_MINUS,
   OP_TIMES,
   OP_DIVIDE,
+  OP_IADD,
+  OP_IMINUS,
   OP_GT,
   OP_GE,
   OP_EQEQ,

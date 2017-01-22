@@ -93,6 +93,8 @@ static void execute_codes(env* e) {
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
       case OP_DIVIDE: BINARY_OP(/); break;
+      case OP_IADD: IBINARY_OP(+); break;
+      case OP_IMINUS: IBINARY_OP(-); break;
       case OP_GT: LOGICAL_BINARY_OP(>); break;
       case OP_GE: LOGICAL_BINARY_OP(>=); break;
       case OP_EQEQ: LOGICAL_BINARY_OP(==); break;
