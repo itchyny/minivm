@@ -1,0 +1,8 @@
+a = 1
+while true
+  print a
+  if a >= 10
+    break
+  end
+  a = a + 1
+end
