@@ -3,12 +3,12 @@
 
 enum OP_CODE {
   OP_POP,
+  OP_DUP,
   OP_LET,
   OP_LET_LOCAL,
   OP_JMP,
-  OP_JMP_IF_KEEP,
-  OP_JMP_NOT,
-  OP_JMP_NOT_KEEP,
+  OP_JMP_IF,
+  OP_JMP_IFNOT,
   OP_UFCALL,
   OP_ALLOC,
   OP_RET,

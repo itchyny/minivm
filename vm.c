@@ -32,6 +32,10 @@ static void execute_codes(env* e) {
       case OP_POP:
         --e->stackidx;
         break;
+      case OP_DUP:
+        e->stack[e->stackidx] = e->stack[e->stackidx - 1];
+        ++e->stackidx;
+        break;
       case OP_LET:
         e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
@@ -41,19 +45,13 @@ static void execute_codes(env* e) {
       case OP_JMP:
         i += GET_ARG_A(e->codes[i]);
         break;
-      case OP_JMP_IF_KEEP:
+      case OP_JMP_IF:
         if (evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
-        ++e->stackidx;
         break;
-      case OP_JMP_NOT:
+      case OP_JMP_IFNOT:
         if (!evaluate_bool(e))
           i += GET_ARG_A(e->codes[i]);
-        break;
-      case OP_JMP_NOT_KEEP:
-        if (!evaluate_bool(e))
-          i += GET_ARG_A(e->codes[i]);
-        ++e->stackidx;
         break;
       case OP_UFCALL:
         e->stack[e->stackidx++].lval = i;

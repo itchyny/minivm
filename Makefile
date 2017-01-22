@@ -1,5 +1,5 @@
 minivm: main.c codegen.c vm.c state.c node.c y.tab.c lex.yy.c
-	cc -o minivm main.c state.c node.c y.tab.c lex.yy.c
+	cc -O2 -o minivm main.c state.c node.c y.tab.c lex.yy.c
 
 y.tab.c y.tab.h: parser.y node.c node.h
 	yacc -dvy $<

@@ -170,7 +170,7 @@ static uint16_t codegen(env* e, node* n) {
     case NODE_IF: {
       int16_t diff0, diff1; uint16_t index0, index1;
       count += codegen(e, n->cdr->car);
-      index0 = addcode(e, OP_JMP_NOT); ++count;
+      index0 = addcode(e, OP_JMP_IFNOT); ++count;
       count += (diff0 = codegen(e, n->cdr->cdr->car));
       if (n->cdr->cdr->cdr != NULL) {
         index1 = addcode(e, OP_JMP); ++count;
@@ -187,7 +187,7 @@ static uint16_t codegen(env* e, node* n) {
       addcode(e, MK_OP_A(OP_JMP, 1)); ++count;
       index0 = addcode(e, OP_JMP); ++count;
       count += (diff0 = codegen(e, n->cdr->car));
-      index1 = addcode(e, OP_JMP_NOT); ++count;
+      index1 = addcode(e, OP_JMP_IFNOT); ++count;
       count += (diff1 = codegen(e, n->cdr->cdr));
       addcode(e, MK_OP_A(OP_JMP, -(diff0 + diff1 + 2))); ++count;
       operand(e, index0, diff0 + diff1 + 2);
@@ -246,13 +246,15 @@ static uint16_t codegen(env* e, node* n) {
       count += codegen(e, n->cdr->cdr->car);
       if (intn(n->cdr->car) == AND) {
         int16_t diff; uint16_t index;
-        index = addcode(e, OP_JMP_NOT_KEEP); ++count;
+        addcode(e, OP_DUP); ++count;
+        index = addcode(e, OP_JMP_IFNOT); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
         operand(e, index, diff + 1);
       } else if (intn(n->cdr->car) == OR) {
         int16_t diff; uint16_t index;
-        index = addcode(e, OP_JMP_IF_KEEP); ++count;
+        addcode(e, OP_DUP); ++count;
+        index = addcode(e, OP_JMP_IF); ++count;
         addcode(e, OP_POP); ++count;
         count += (diff = codegen(e, n->cdr->cdr->cdr));
         operand(e, index, diff + 1);
@@ -350,12 +352,12 @@ static void print_codes(env* e) {
   for (i = 0; i < e->codesidx; i++) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_POP: printf("pop\n"); break;
+      case OP_DUP: printf("dup\n"); break;
       case OP_LET: printf("let %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_LET_LOCAL: printf("let_local %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_IF: printf("jmp_if %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_JMP_IFNOT: printf("jmp_ifnot %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_UFCALL: printf("ufcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_ALLOC: printf("alloc %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_RET: printf("ret %d\n", GET_ARG_A(e->codes[i])); break;
