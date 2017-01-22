@@ -21,11 +21,11 @@ static void execute_codes(env* e) {
     /* printf("\n"); */
     /* printf("%d %d %d\n", i, e->stackidx, GET_OPCODE(e->codes[i])); */
     /* for (j = 0; j < 10; j++) { */
-    /*   printf("%d ", e->stack[j].lval); */
+    /*   printf("%ld ", e->stack[j].lval); */
     /* } */
     /* printf("\n"); */
     /* for (j = 0; j < 10; j++) { */
-    /*   printf("%d ", e->variables[j].value.lval); */
+    /*   printf("%ld ", e->variables[j].value.lval); */
     /* } */
     /* printf("\n"); */
     switch (GET_OPCODE(e->codes[i])) {
@@ -55,26 +55,21 @@ static void execute_codes(env* e) {
           i += GET_ARG_A(e->codes[i]);
         ++e->stackidx;
         break;
-      case OP_SAVEPC:
+      case OP_UFCALL:
         e->stack[e->stackidx++].lval = i;
-        break;
-      case OP_UNSAVEPC:
-        i = e->variables[offset + 1].value.lval + 1; // todo: index...
+        i = e->variables[GET_ARG_A(e->codes[i])].value.lval;
         break;
       case OP_ALLOC:
         offset += GET_ARG_A(e->codes[i]);
         break;
-      case OP_UNALLOC:
-        offset -= GET_ARG_A(e->codes[i]);
+      case OP_RET:
+        i = e->variables[(offset -= GET_ARG_A(e->codes[i])) + 1].value.lval;
         break;
       case OP_FCALL: {
         int len = GET_ARG_B(e->codes[i]);
         gfuncs[GET_ARG_A(e->codes[i])].func(e, &e->stack[e->stackidx -= len], len);
         break;
       }
-      case OP_UFCALL:
-        i = e->variables[GET_ARG_A(e->codes[i])].value.lval;
-        break;
       case OP_PRINT:
         v = e->stack[--e->stackidx];
         switch (v.type) {

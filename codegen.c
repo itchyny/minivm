@@ -122,7 +122,7 @@ static uint16_t codegen(env* e, node* n) {
   uint16_t count = 0;
   switch (intn(n->car)) {
     case NODE_FUNCTION: {
-      constant_value v; v.lval = e->codesidx + 4;
+      constant_value v; v.lval = e->codesidx + 3;
       variable_index vi = lookup(e, (char*)n->cdr->car, true);
       addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
       addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
@@ -131,8 +131,7 @@ static uint16_t codegen(env* e, node* n) {
       uint16_t save_func_pc = e->func_pc; e->func_pc = e->codesidx;
       uint16_t index1, index2, index3, index4;
       index1 = addcode(e, OP_JMP); ++count;
-      index2 = addcode(e, OP_UNALLOC); ++count;
-      addcode(e, OP_UNSAVEPC); ++count;
+      index2 = addcode(e, OP_RET); ++count;
       index3 = addcode(e, OP_ALLOC); ++count;
       index4 = addcode(e, OP_LET_LOCAL); ++count;
       count += let_args(e, n->cdr->cdr->car);
@@ -217,9 +216,6 @@ static uint16_t codegen(env* e, node* n) {
         ++num;
         count += codegen(e, m->car);
         m = m->cdr;
-      }
-      if (op == OP_UFCALL) {
-        addcode(e, OP_SAVEPC); ++count;
       }
       addcode(e, MK_OP_AB(op, i, num)); ++count;
       break;
@@ -334,13 +330,11 @@ static void print_codes(env* e) {
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT_KEEP: printf("jmp_not_keep %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_SAVEPC: printf("savepc\n"); break;
-      case OP_UNSAVEPC: printf("unsavepc\n"); break;
+      case OP_UFCALL: printf("ufcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_ALLOC: printf("alloc %d\n", GET_ARG_A(e->codes[i])); break;
-      case OP_UNALLOC: printf("unalloc %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_RET: printf("ret %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_PRINT: printf("print\n"); break;
       case OP_FCALL: printf("fcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
-      case OP_UFCALL: printf("ufcall %d %d\n", GET_ARG_A(e->codes[i]), GET_ARG_B(e->codes[i])); break;
       case OP_UNOT: printf("u!\n"); break;
       case OP_UADD: printf("u+\n"); break;
       case OP_UMINUS: printf("u-\n"); break;
