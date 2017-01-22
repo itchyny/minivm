@@ -198,6 +198,9 @@ static uint16_t codegen(env* e, node* n) {
     case NODE_BREAK:
       addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->while_pc))); ++count;
       break;
+    case NODE_CONTINUE:
+      addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->while_pc - 1))); ++count;
+      break;
     case NODE_PRINT:
       count += codegen(e, n->cdr);
       addcode(e, OP_PRINT); ++count;

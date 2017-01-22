@@ -14,6 +14,7 @@ enum node_type {
   NODE_IF,
   NODE_WHILE,
   NODE_BREAK,
+  NODE_CONTINUE,
   NODE_PRINT,
   NODE_FCALL,
   NODE_UNARYOP,

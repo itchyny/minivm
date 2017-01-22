@@ -116,6 +116,9 @@ void print_node(node* n, int indent) {
     case NODE_BREAK:
       printf("break");
       break;
+    case NODE_CONTINUE:
+      printf("continue");
+      break;
     case NODE_PRINT:
       printf("print");
       print_node(n->cdr, indent + 2);

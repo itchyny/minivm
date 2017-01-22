@@ -21,7 +21,7 @@ int yyerror(state*, char const*);
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
 %token EQ PLUS MINUS TIMES DIVIDE GT GE EQEQ LT LE
 %token LPAREN RPAREN COMMA PRINT CR
-%token FUNC RETURN IF ELSEIF ELSE WHILE BREAK END
+%token FUNC RETURN IF ELSEIF ELSE WHILE BREAK CONTINUE END
 %type <node> program statements statement else_opt expression fargs_opt fargs args_opt args primary
 
 %left OR
@@ -81,6 +81,10 @@ statement         : FUNC IDENTIFIER LPAREN fargs_opt RPAREN sep statements sep E
                   | BREAK
                     {
                       $$ = cons(nint(NODE_BREAK), NULL);
+                    }
+                  | CONTINUE
+                    {
+                      $$ = cons(nint(NODE_CONTINUE), NULL);
                     }
                   | PRINT expression
                     {

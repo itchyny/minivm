@@ -39,6 +39,7 @@ int yywrap(yyscan_t yyscanner)
 "else"     return ELSE;
 "while"    return WHILE;
 "break"    return BREAK;
+"continue" return CONTINUE;
 "func"     return FUNC;
 "return"   return RETURN;
 "end"      return END;
