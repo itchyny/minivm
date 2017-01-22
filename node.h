@@ -13,6 +13,7 @@ enum node_type {
   NODE_ASSIGN,
   NODE_IF,
   NODE_WHILE,
+  NODE_BREAK,
   NODE_PRINT,
   NODE_FCALL,
   NODE_UNARYOP,

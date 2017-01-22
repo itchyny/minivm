@@ -23,6 +23,7 @@ static env* new_env() {
   e->local_variables = NULL;
   e->local_variables_len = 0;
   e->func_pc = 0;
+  e->while_pc = 0;
   return e;
 }
 
@@ -181,14 +182,22 @@ static uint16_t codegen(env* e, node* n) {
       break;
     }
     case NODE_WHILE: {
-      int16_t diff0, diff1; uint16_t index;
+      uint16_t save_while_pc = e->while_pc; e->while_pc = e->codesidx;
+      int16_t diff0, diff1; uint16_t index0, index1;
+      addcode(e, MK_OP_A(OP_JMP, 1)); ++count;
+      index0 = addcode(e, OP_JMP); ++count;
       count += (diff0 = codegen(e, n->cdr->car));
-      index = addcode(e, OP_JMP_NOT); ++count;
+      index1 = addcode(e, OP_JMP_NOT); ++count;
       count += (diff1 = codegen(e, n->cdr->cdr));
       addcode(e, MK_OP_A(OP_JMP, -(diff0 + diff1 + 2))); ++count;
-      operand(e, index, diff1 + 1);
+      operand(e, index0, diff0 + diff1 + 2);
+      operand(e, index1, diff1 + 1);
+      e->while_pc = save_while_pc;
       break;
     }
+    case NODE_BREAK:
+      addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->while_pc))); ++count;
+      break;
     case NODE_PRINT:
       count += codegen(e, n->cdr);
       addcode(e, OP_PRINT); ++count;
