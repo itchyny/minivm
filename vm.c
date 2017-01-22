@@ -95,11 +95,11 @@ static void execute_codes(env* e) {
       case OP_MINUS: BINARY_OP(-); break;
       case OP_TIMES: BINARY_OP(*); break;
       case OP_DIVIDE: BINARY_OP(/); break;
-      case OP_GT: BINARY_OP(>); break;
-      case OP_GE: BINARY_OP(>=); break;
-      case OP_EQEQ: BINARY_OP(==); break;
-      case OP_LT: BINARY_OP(<); break;
-      case OP_LE: BINARY_OP(<=); break;
+      case OP_GT: LOGICAL_BINARY_OP(>); break;
+      case OP_GE: LOGICAL_BINARY_OP(>=); break;
+      case OP_EQEQ: LOGICAL_BINARY_OP(==); break;
+      case OP_LT: LOGICAL_BINARY_OP(<); break;
+      case OP_LE: LOGICAL_BINARY_OP(<=); break;
       case OP_LOAD_BOOL:
         e->stack[e->stackidx].type = VT_BOOL;
         e->stack[e->stackidx++].bval = e->constants[GET_ARG_A(e->codes[i])].bval;

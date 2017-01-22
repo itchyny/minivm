@@ -8,3 +8,8 @@ print f / t
 print t / (f / t + t)
 print t * 3.14 + f / 3.14
 print 3.14 / (t + f)
+print 10 > 5
+print 5 >= 4
+print 5 == 5
+print 5 <= 4
+print 10 < 5

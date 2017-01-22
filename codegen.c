@@ -331,6 +331,19 @@ static uint16_t codegen(env* e, node* n) {
     } \
   } while(0);
 
+#define LOGICAL_BINARY_OP(op) \
+  do { \
+    value rhs = e->stack[--e->stackidx]; \
+    value lhs = e->stack[--e->stackidx]; \
+    e->stack[e->stackidx].type = VT_BOOL; \
+    if (lhs.type == VT_DOUBLE || rhs.type == VT_DOUBLE) { \
+      e->stack[e->stackidx++].bval = TO_DOUBLE(lhs) op TO_DOUBLE(rhs); \
+      \
+    } else { \
+      e->stack[e->stackidx++].bval = TO_LONG(lhs) op TO_LONG(rhs); \
+    } \
+  } while(0);
+
 static void print_codes(env* e) {
   int i;
   for (i = 0; i < e->codesidx; i++) {
