@@ -19,14 +19,14 @@ int yyerror(state*, char const*);
   node *node;
 }
 %token <node> BOOL_LITERAL LONG_LITERAL DOUBLE_LITERAL IDENTIFIER;
-%token EQ PLUS MINUS TIMES DIVIDE GT GE EQEQ LT LE
+%token EQ PLUS MINUS TIMES DIVIDE GT GE EQEQ NEQ LT LE
 %token LPAREN RPAREN COMMA PRINT CR
 %token FUNC RETURN IF ELSEIF ELSE WHILE BREAK CONTINUE END
 %type <node> program statements statement else_opt expression fargs_opt fargs args_opt args primary
 
 %left OR
 %left AND
-%nonassoc EQEQ
+%nonassoc EQEQ NEQ
 %left GT GE LT LE
 %left PLUS MINUS
 %left TIMES DIVIDE
@@ -157,6 +157,10 @@ expression        : IDENTIFIER LPAREN args_opt RPAREN
                   | expression EQEQ expression
                     {
                       $$ = binop(EQEQ, $1, $3);
+                    }
+                  | expression NEQ expression
+                    {
+                      $$ = binop(NEQ, $1, $3);
                     }
                   | expression LT expression
                     {

@@ -24,6 +24,7 @@ enum OP_CODE {
   OP_GT,
   OP_GE,
   OP_EQEQ,
+  OP_NEQ,
   OP_LT,
   OP_LE,
   OP_LOAD_BOOL,

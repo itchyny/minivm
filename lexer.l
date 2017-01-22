@@ -24,6 +24,7 @@ int yywrap(yyscan_t yyscanner)
 ">"    return GT;
 ">="   return GE;
 "=="   return EQEQ;
+"!="   return NEQ;
 "<"    return LT;
 "<="   return LE;
 "("    return LPAREN;

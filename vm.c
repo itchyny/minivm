@@ -98,6 +98,7 @@ static void execute_codes(env* e) {
       case OP_GT: LOGICAL_BINARY_OP(>); break;
       case OP_GE: LOGICAL_BINARY_OP(>=); break;
       case OP_EQEQ: LOGICAL_BINARY_OP(==); break;
+      case OP_NEQ: LOGICAL_BINARY_OP(!=); break;
       case OP_LT: LOGICAL_BINARY_OP(<); break;
       case OP_LE: LOGICAL_BINARY_OP(<=); break;
       case OP_LOAD_BOOL:

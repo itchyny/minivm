@@ -266,6 +266,7 @@ static uint16_t codegen(env* e, node* n) {
           case GT: addcode(e, OP_GT); break;
           case GE: addcode(e, OP_GE); break;
           case EQEQ: addcode(e, OP_EQEQ); break;
+          case NEQ: addcode(e, OP_NEQ); break;
           case LT: addcode(e, OP_LT); break;
           case LE: addcode(e, OP_LE); break;
           default: printf("Unknown binary operator\n"); exit(1);
@@ -370,6 +371,7 @@ static void print_codes(env* e) {
       case OP_GT: printf(">\n"); break;
       case OP_GE: printf(">=\n"); break;
       case OP_EQEQ: printf("==\n"); break;
+      case OP_NEQ: printf("!=\n"); break;
       case OP_LT: printf("<\n"); break;
       case OP_LE: printf("<=\n"); break;
       case OP_LOAD_BOOL:
