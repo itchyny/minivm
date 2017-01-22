@@ -55,6 +55,8 @@ typedef struct env {
   value* stack;
   variable* variables;
   uint32_t variableslen;
+  variable* local_variables;
+  uint32_t local_variables_len;
   uint16_t func_pc;
 } env;
 

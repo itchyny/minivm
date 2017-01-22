@@ -20,6 +20,8 @@ static env* new_env() {
   e->stack = NULL;
   e->variables = calloc(128, sizeof(variable));
   e->variableslen = 0;
+  e->local_variables = NULL;
+  e->local_variables_len = 0;
   e->func_pc = 0;
   return e;
 }
@@ -37,8 +39,8 @@ static void free_env(env* e) {
 
 #define MK_ARG_A(a)         ((intptr_t)((a) & 0xffff) << 8)
 #define MK_ARG_B(a)         ((intptr_t)((a) & 0xff) << 24)
-#define MK_OP_A(op,a)       (op|MK_ARG_A(a))
-#define MK_OP_AB(op,a,b)    (op|MK_ARG_A(a)|MK_ARG_B(b))
+#define MK_OP_A(op,a)       ((op)|MK_ARG_A(a))
+#define MK_OP_AB(op,a,b)    ((op)|MK_ARG_A(a)|MK_ARG_B(b))
 
 static uint16_t addcode(env* e, uint32_t c) {
   if (e->codesidx == e->codeslen) {
@@ -75,12 +77,26 @@ typedef struct variable_index {
 
 static variable_index lookup(env* e, char* name, bool set) {
   variable_index vi;
+  if (e->local_variables != NULL) {
+    vi.global = false;
+    vi.index = 0;
+    while (e->local_variables[vi.index].name) {
+      if (strcmp(e->local_variables[vi.index].name, name) == 0)
+        return vi;
+      vi.index++;
+    }
+    if (set) {
+      e->local_variables[vi.index].name = name;
+      e->local_variables_len = vi.index + 1;
+      return vi;
+    }
+  }
   vi.global = true;
   vi.index = 0;
   while (e->variables[vi.index].name) {
     if (strcmp(e->variables[vi.index].name, name) == 0)
       return vi;
-    ++vi.index;
+    vi.index++;
   }
   if (set) {
     e->variables[vi.index].name = name;
@@ -97,7 +113,7 @@ static uint16_t let_args(env* e, node* fargs) {
   if (fargs != NULL) {
     count += let_args(e, fargs->cdr);
     vi = lookup(e, (char*)fargs->car, true);
-    addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
+    addcode(e, MK_OP_A(OP_LET_LOCAL, vi.index)); ++count;
   }
   return count;
 }
@@ -110,27 +126,27 @@ static uint16_t codegen(env* e, node* n) {
       variable_index vi = lookup(e, (char*)n->cdr->car, true);
       addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
       addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
-      variable* save_variables = e->variables; e->variables = calloc(128, sizeof(variable));
-      uint32_t save_variableslen = e->variableslen; e->variableslen = 0;
+      e->local_variables = calloc(128, sizeof(variable));
+      e->local_variables_len = 0;
       uint16_t save_func_pc = e->func_pc; e->func_pc = e->codesidx;
       uint16_t index1, index2, index3, index4;
       index1 = addcode(e, OP_JMP); ++count;
       index2 = addcode(e, OP_UNALLOC); ++count;
       addcode(e, OP_UNSAVEPC); ++count;
       index3 = addcode(e, OP_ALLOC); ++count;
-      index4 = addcode(e, OP_LET); ++count;
+      index4 = addcode(e, OP_LET_LOCAL); ++count;
       count += let_args(e, n->cdr->cdr->car);
       count += codegen(e, n->cdr->cdr->cdr);
       v.lval = 0;
       addcode(e, MK_OP_A(OP_LOAD_LONG, addconstant(e, v))); ++count;
       addcode(e, MK_OP_A(OP_JMP, - (long)(e->codesidx - e->func_pc))); ++count;
       operand(e, index1, e->codesidx - e->func_pc - 1);
-      operand(e, index2, e->variableslen + 1);
-      operand(e, index3, e->variableslen + 1);
-      operand(e, index4, e->variableslen);
-      free(e->variables);
-      e->variables = save_variables;
-      e->variableslen = save_variableslen;
+      operand(e, index2, e->local_variables_len + 1);
+      operand(e, index3, e->local_variables_len + 1);
+      operand(e, index4, e->local_variables_len);
+      free(e->local_variables);
+      e->local_variables = NULL;
+      e->local_variables_len = 0;
       e->func_pc = save_func_pc;
       break;
     }
@@ -146,10 +162,9 @@ static uint16_t codegen(env* e, node* n) {
       }
       break;
     case NODE_ASSIGN: {
-      variable_index vi;
-      vi = lookup(e, (char*)n->cdr->car, true);
+      variable_index vi = lookup(e, (char*)n->cdr->car, true);
       count += codegen(e, n->cdr->cdr);
-      addcode(e, MK_OP_A(OP_LET, vi.index)); ++count;
+      addcode(e, MK_OP_A(vi.global ? OP_LET : OP_LET_LOCAL, vi.index)); ++count;
       break;
     }
     case NODE_IF: {
@@ -272,7 +287,7 @@ static uint16_t codegen(env* e, node* n) {
         printf("Unknown variable: %s\n", (char*)n->cdr);
         exit(1);
       }
-      addcode(e, MK_OP_A(OP_LOAD_IDENT, vi.index)); ++count;
+      addcode(e, MK_OP_A(vi.global ? OP_LOAD_IDENT : OP_LOAD_LOCAL_IDENT, vi.index)); ++count;
       break;
     }
     default:
@@ -314,6 +329,7 @@ static void print_codes(env* e) {
     switch (GET_OPCODE(e->codes[i])) {
       case OP_POP: printf("pop\n"); break;
       case OP_LET: printf("let %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_LET_LOCAL: printf("let_local %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP: printf("jmp %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_IF_KEEP: printf("jmp_if_keep %d\n", GET_ARG_A(e->codes[i])); break;
       case OP_JMP_NOT: printf("jmp_not %d\n", GET_ARG_A(e->codes[i])); break;
@@ -346,6 +362,7 @@ static void print_codes(env* e) {
       case OP_LOAD_LONG: printf("long %ld\n", e->constants[GET_ARG_A(e->codes[i])].lval); break;
       case OP_LOAD_DOUBLE: printf("double %.9lf\n", e->constants[GET_ARG_A(e->codes[i])].dval); break;
       case OP_LOAD_IDENT: printf("load %d\n", GET_ARG_A(e->codes[i])); break;
+      case OP_LOAD_LOCAL_IDENT: printf("load_local %d\n", GET_ARG_A(e->codes[i])); break;
       default: printf("Unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
     }
   }

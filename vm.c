@@ -15,15 +15,27 @@ inline static bool evaluate_bool(env* e) {
 }
 
 static void execute_codes(env* e) {
-  int i, offset = e->variableslen - 1; value v;
+  int i, j, offset = e->variableslen - 1; value v;
   e->stack = calloc(1024, sizeof(value));
   for (i = 0; i < e->codesidx; ++i) {
+    /* printf("\n"); */
     /* printf("%d %d %d\n", i, e->stackidx, GET_OPCODE(e->codes[i])); */
+    /* for (j = 0; j < 10; j++) { */
+    /*   printf("%d ", e->stack[j].lval); */
+    /* } */
+    /* printf("\n"); */
+    /* for (j = 0; j < 10; j++) { */
+    /*   printf("%d ", e->variables[j].value.lval); */
+    /* } */
+    /* printf("\n"); */
     switch (GET_OPCODE(e->codes[i])) {
       case OP_POP:
         --e->stackidx;
         break;
       case OP_LET:
+        e->variables[GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
+        break;
+      case OP_LET_LOCAL:
         e->variables[offset - GET_ARG_A(e->codes[i])].value = e->stack[--e->stackidx];
         break;
       case OP_JMP:
@@ -61,7 +73,7 @@ static void execute_codes(env* e) {
         break;
       }
       case OP_UFCALL:
-        i = e->variables[offset - GET_ARG_A(e->codes[i])].value.lval;
+        i = e->variables[GET_ARG_A(e->codes[i])].value.lval;
         break;
       case OP_PRINT:
         v = e->stack[--e->stackidx];
@@ -106,6 +118,9 @@ static void execute_codes(env* e) {
         e->stack[e->stackidx++].dval = e->constants[GET_ARG_A(e->codes[i])].dval;
         break;
       case OP_LOAD_IDENT:
+        e->stack[e->stackidx++] = e->variables[GET_ARG_A(e->codes[i])].value;
+        break;
+      case OP_LOAD_LOCAL_IDENT:
         e->stack[e->stackidx++] = e->variables[offset - GET_ARG_A(e->codes[i])].value;
         break;
       default: printf("Unknown opcode %d\n", GET_OPCODE(e->codes[i])); exit(1);
