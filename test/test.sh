@@ -2,7 +2,7 @@
 bin=$(dirname $0)/../minivm
 ret=0
 for f in $(dirname $0)/*/*.in; do
-  output=$($bin < $f)
+  output=$($bin < $f | sed "s/\n//g")
   expected=$(cat ${f%.in}.out)
   if [[ X$output != X$expected ]]; then
     echo Test failed!
