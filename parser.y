@@ -13,7 +13,7 @@ int yyerror(state*, char const*);
 
 %pure-parser
 %parse-param {state *s}
-%lex-param {void *scanner}
+%lex-param {YYLEX_PARAM}
 
 %union {
   node *node;
